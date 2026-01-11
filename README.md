@@ -21,19 +21,18 @@
 
 ### Build from Source
 1. Clone the repository:
-   ```bash
-   git clone [https://github.com/Pommersche92/lazyllama.git](https://github.com/Pommersche92/lazyllama.git)
-   cd lazyllama
 
+```bash
+   git clone https://github.com/Pommersche92/lazyllama.git
+   cd lazyllama
 ```
 
 2. Install it system-wide:
+
 ```bash
 cargo install --path .
 
 ```
-
-
 
 ## ⌨️ Controls
 
