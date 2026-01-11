@@ -27,6 +27,7 @@
 //! Dieses Modul übernimmt das Rendering der Widgets, das Parsing von Markdown
 //! und die Berechnung der Scroll-Position.
 
+use crate::app::App;
 use ratatui::{
     layout::{Alignment, Constraint, Direction, Layout},
     style::{Color, Modifier, Style},
@@ -35,7 +36,6 @@ use ratatui::{
     Frame,
 };
 use regex::Regex;
-use crate::app::App;
 
 /// Das ASCII-Banner, das oben in der Anwendung angezeigt wird.
 pub const BANNER: &str = r#"
@@ -51,29 +51,46 @@ pub const BANNER: &str = r#"
 /// sowie das Eingabefeld inklusive Spinner.
 pub fn ui(f: &mut Frame, app: &mut App) {
     let root_layout = Layout::default()
-    .direction(Direction::Vertical)
-    .constraints([Constraint::Length(7), Constraint::Min(0), Constraint::Length(1)])
-    .split(f.size());
+        .direction(Direction::Vertical)
+        .constraints([
+            Constraint::Length(7),
+            Constraint::Min(0),
+            Constraint::Length(1),
+        ])
+        .split(f.size());
 
-    f.render_widget(Paragraph::new(BANNER).style(Style::default().fg(Color::Cyan)).alignment(Alignment::Center), root_layout[0]);
+    f.render_widget(
+        Paragraph::new(BANNER)
+            .style(Style::default().fg(Color::Cyan))
+            .alignment(Alignment::Center),
+        root_layout[0],
+    );
 
     let main_chunks = Layout::default()
-    .direction(Direction::Horizontal)
-    .constraints([Constraint::Percentage(25), Constraint::Percentage(75)])
-    .split(root_layout[1]);
+        .direction(Direction::Horizontal)
+        .constraints([Constraint::Percentage(25), Constraint::Percentage(75)])
+        .split(root_layout[1]);
 
     // Modellliste rendern
-    let items: Vec<ListItem> = app.models.iter().map(|m| ListItem::new(m.as_str())).collect();
+    let items: Vec<ListItem> = app
+        .models
+        .iter()
+        .map(|m| ListItem::new(m.as_str()))
+        .collect();
     let list = List::new(items)
-    .block(Block::default().borders(Borders::ALL).title(" Models "))
-    .highlight_style(Style::default().bg(Color::Blue).add_modifier(Modifier::BOLD))
-    .highlight_symbol(">> ");
+        .block(Block::default().borders(Borders::ALL).title(" Models "))
+        .highlight_style(
+            Style::default()
+                .bg(Color::Blue)
+                .add_modifier(Modifier::BOLD),
+        )
+        .highlight_symbol(">> ");
     f.render_stateful_widget(list, main_chunks[0], &mut app.list_state);
 
     let chat_chunks = Layout::default()
-    .direction(Direction::Vertical)
-    .constraints([Constraint::Min(3), Constraint::Length(3)])
-    .split(main_chunks[1]);
+        .direction(Direction::Vertical)
+        .constraints([Constraint::Min(3), Constraint::Length(3)])
+        .split(main_chunks[1]);
 
     // Verlauf parsen und Scrollen berechnen
     let history_text = parse_history(&app.history);
@@ -84,26 +101,60 @@ pub fn ui(f: &mut Frame, app: &mut App) {
         app.scroll = total_lines.saturating_sub(visible_height);
     } else {
         let max_scroll = total_lines.saturating_sub(visible_height);
-        if app.scroll > max_scroll { app.scroll = max_scroll; }
+        if app.scroll > max_scroll {
+            app.scroll = max_scroll;
+        }
     }
 
-    let scroll_status = if app.autoscroll { " [AUTOSCROLL] " } else { " [MANUAL SCROLL 🔒] " };
+    let scroll_status = if app.autoscroll {
+        " [AUTOSCROLL] "
+    } else {
+        " [MANUAL SCROLL 🔒] "
+    };
     f.render_widget(
         Paragraph::new(history_text)
-        .block(Block::default().borders(Borders::ALL).title(format!(" Conversation History{} ", scroll_status))
-        .border_style(if !app.autoscroll { Style::default().fg(Color::Yellow) } else { Style::default() }))
-        .wrap(Wrap { trim: true })
-        .scroll((app.scroll, 0)),
-                    chat_chunks[0]
+            .block(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .title(format!(" Conversation History{} ", scroll_status))
+                    .border_style(if !app.autoscroll {
+                        Style::default().fg(Color::Yellow)
+                    } else {
+                        Style::default()
+                    }),
+            )
+            .wrap(Wrap { trim: true })
+            .scroll((app.scroll, 0)),
+        chat_chunks[0],
     );
 
     // Spinner-Animation berechnen
     let spinner_frames = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
     let frame_idx = (app.start_time.elapsed().as_millis() / 100) as usize % spinner_frames.len();
-    let input_title = if app.is_loading { format!(" {} AI is thinking... ", spinner_frames[frame_idx]) } else { " > Input ".into() };
+    let input_title = if app.is_loading {
+        format!(" {} AI is thinking... ", spinner_frames[frame_idx])
+    } else {
+        " > Input ".into()
+    };
 
-    f.render_widget(Paragraph::new(app.input.as_str()).block(Block::default().borders(Borders::ALL).title(input_title).border_style(if app.is_loading { Style::default().fg(Color::Yellow) } else { Style::default() })), chat_chunks[1]);
-    f.render_widget(Paragraph::new(" C-q: Quit | C-c: Clear | C-s: AutoScroll | PgUp/Dn: Scroll ").style(Style::default().bg(Color::White).fg(Color::Black)), root_layout[2]);
+    f.render_widget(
+        Paragraph::new(app.input.as_str()).block(
+            Block::default()
+                .borders(Borders::ALL)
+                .title(input_title)
+                .border_style(if app.is_loading {
+                    Style::default().fg(Color::Yellow)
+                } else {
+                    Style::default()
+                }),
+        ),
+        chat_chunks[1],
+    );
+    f.render_widget(
+        Paragraph::new(" C-q: Quit | C-c: Clear | C-s: AutoScroll | PgUp/Dn: Scroll ")
+            .style(Style::default().bg(Color::White).fg(Color::Black)),
+        root_layout[2],
+    );
 }
 
 /// Parst den History-String und wandelt ihn in ein formatiertes Ratatui-[Text]-Objekt um.
@@ -121,11 +172,20 @@ fn parse_history<'a>(history: &'a str) -> Text<'a> {
         let lang = caps.name("lang").map_or("code", |m| m.as_str());
         let code_content = caps.name("code").map_or("", |m| m.as_str());
 
-        text.push_line(Line::from(Span::styled(format!(" ┌── {} ──", lang), Style::default().fg(Color::Yellow))));
+        text.push_line(Line::from(Span::styled(
+            format!(" ┌── {} ──", lang),
+            Style::default().fg(Color::Yellow),
+        )));
         for line in code_content.lines() {
-            text.push_line(Line::from(vec![Span::styled(" │ ", Style::default().fg(Color::Yellow)), Span::raw(line)]));
+            text.push_line(Line::from(vec![
+                Span::styled(" │ ", Style::default().fg(Color::Yellow)),
+                Span::raw(line),
+            ]));
         }
-        text.push_line(Line::from(Span::styled(" └──────────", Style::default().fg(Color::Yellow))));
+        text.push_line(Line::from(Span::styled(
+            " └──────────",
+            Style::default().fg(Color::Yellow),
+        )));
         last_match_end = full_match.end();
     }
     if last_match_end < history.len() {
@@ -140,12 +200,27 @@ fn process_styled_text<'a>(text: &'a str, target: &mut Text<'a>) {
         let trimmed = line.trim();
         let mut spans = Vec::new();
         if trimmed.starts_with("###") {
-            spans.push(Span::styled(format!("● {}", trimmed.trim_start_matches('#').trim()), Style::default().fg(Color::White).add_modifier(Modifier::BOLD)));
+            spans.push(Span::styled(
+                format!("● {}", trimmed.trim_start_matches('#').trim()),
+                Style::default()
+                    .fg(Color::White)
+                    .add_modifier(Modifier::BOLD),
+            ));
         } else if line.starts_with("YOU:") {
-            spans.push(Span::styled("YOU:", Style::default().fg(Color::Magenta).add_modifier(Modifier::BOLD)));
+            spans.push(Span::styled(
+                "YOU:",
+                Style::default()
+                    .fg(Color::Magenta)
+                    .add_modifier(Modifier::BOLD),
+            ));
             spans.push(Span::raw(&line[4..]));
         } else if line.starts_with("AI:") {
-            spans.push(Span::styled("AI: ", Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD)));
+            spans.push(Span::styled(
+                "AI: ",
+                Style::default()
+                    .fg(Color::Cyan)
+                    .add_modifier(Modifier::BOLD),
+            ));
             spans.push(Span::raw(&line[3..]));
         } else {
             spans.push(Span::raw(line));

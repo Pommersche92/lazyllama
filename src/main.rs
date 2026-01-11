@@ -61,31 +61,55 @@ async fn main() -> Result<()> {
                 let is_ctrl = key.modifiers.contains(KeyModifiers::CONTROL);
                 match (key.code, is_ctrl) {
                     (KeyCode::Char('q'), true) => should_quit = true,
-                    (KeyCode::Char('c'), true) => { app.history.clear(); app.scroll = 0; app.autoscroll = true; },
+                    (KeyCode::Char('c'), true) => {
+                        app.history.clear();
+                        app.scroll = 0;
+                        app.autoscroll = true;
+                    }
                     (KeyCode::Char('s'), true) => app.autoscroll = !app.autoscroll,
                     (KeyCode::Up, _) => {
                         let i = match app.list_state.selected() {
-                            Some(i) => if i == 0 { app.models.len() - 1 } else { i - 1 },
+                            Some(i) => {
+                                if i == 0 {
+                                    app.models.len() - 1
+                                } else {
+                                    i - 1
+                                }
+                            }
                             None => 0,
                         };
                         app.list_state.select(Some(i));
                     }
                     (KeyCode::Down, _) => {
                         let i = match app.list_state.selected() {
-                            Some(i) => if i >= app.models.len() - 1 { 0 } else { i + 1 },
+                            Some(i) => {
+                                if i >= app.models.len() - 1 {
+                                    0
+                                } else {
+                                    i + 1
+                                }
+                            }
                             None => 0,
                         };
                         app.list_state.select(Some(i));
                     }
-                    (KeyCode::PageUp, _) => { app.autoscroll = false; app.scroll = app.scroll.saturating_sub(5); }
-                    (KeyCode::PageDown, _) => { app.autoscroll = false; app.scroll = app.scroll.saturating_add(5); }
+                    (KeyCode::PageUp, _) => {
+                        app.autoscroll = false;
+                        app.scroll = app.scroll.saturating_sub(5);
+                    }
+                    (KeyCode::PageDown, _) => {
+                        app.autoscroll = false;
+                        app.scroll = app.scroll.saturating_add(5);
+                    }
                     (KeyCode::Enter, _) => {
                         if !app.input.is_empty() && !app.is_loading {
                             app.send_query(&mut terminal).await?;
                         }
                     }
                     (KeyCode::Char(c), false) => app.input.push(c),
-                    (KeyCode::Backspace, _) => { app.input.pop(); }
+                    (KeyCode::Backspace, _) => {
+                        app.input.pop();
+                    }
                     _ => {}
                 }
             }
@@ -93,7 +117,11 @@ async fn main() -> Result<()> {
     }
 
     disable_raw_mode()?;
-    execute!(terminal.backend_mut(), LeaveAlternateScreen, DisableMouseCapture)?;
+    execute!(
+        terminal.backend_mut(),
+        LeaveAlternateScreen,
+        DisableMouseCapture
+    )?;
     utils::save_history_to_file(&app.history)?;
     Ok(())
 }

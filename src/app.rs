@@ -27,12 +27,12 @@
 //! Dieses Modul enthält die [`App`]-Struktur, die den gesamten Zustand
 //! der Terminal-UI sowie die Kommunikation mit Ollama verwaltet.
 
+use anyhow::Result;
 use ollama_rs::{generation::completion::request::GenerationRequest, Ollama};
 use ratatui::{backend::CrosstermBackend, widgets::ListState, Terminal};
 use std::io;
 use std::time::Instant;
 use tokio_stream::StreamExt;
-use anyhow::Result;
 
 /// Hält den gesamten Zustand der LazyLlama Anwendung.
 pub struct App {
@@ -89,7 +89,10 @@ impl App {
     ///
     /// Die Antwort wird während des Empfangs direkt in `self.history` geschrieben
     /// und das Terminal wird bei jedem neuen Token aktualisiert.
-    pub async fn send_query(&mut self, terminal: &mut Terminal<CrosstermBackend<io::Stdout>>) -> Result<()> {
+    pub async fn send_query(
+        &mut self,
+        terminal: &mut Terminal<CrosstermBackend<io::Stdout>>,
+    ) -> Result<()> {
         if let Some(i) = self.list_state.selected() {
             let model = self.models[i].clone();
             let prompt = self.input.clone();

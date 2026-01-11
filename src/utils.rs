@@ -33,8 +33,11 @@ use std::fs;
 /// Die Datei wird unter `~/.local/share/lazyllama/chat_DATUM_UHRZEIT.txt` abgelegt.
 /// Gibt `Ok(())` zurück, wenn die Datei erfolgreich geschrieben wurde oder der Verlauf leer war.
 pub fn save_history_to_file(history: &str) -> Result<()> {
-    if history.is_empty() { return Ok(()); }
-    let mut log_dir = dirs::data_local_dir().ok_or_else(|| anyhow::anyhow!("Data dir not found"))?;
+    if history.is_empty() {
+        return Ok(());
+    }
+    let mut log_dir =
+        dirs::data_local_dir().ok_or_else(|| anyhow::anyhow!("Data dir not found"))?;
     log_dir.push("lazyllama");
     fs::create_dir_all(&log_dir)?;
     let filename = format!("chat_{}.txt", Local::now().format("%Y-%m-%d_%H-%M-%S"));
