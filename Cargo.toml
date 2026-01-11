@@ -2,6 +2,15 @@
 name = "lazyllama"
 version = "0.1.0"
 edition = "2021"
+authors = ["Raimo Geisel"]
+description = "A lightweight TUI client for Ollama with markdown support and smart scrolling."
+license = "GPL-2.0-or-later"
+repository = "https://github.com/Pommersche92/lazyllama"
+homepage = "https://github.com/Pommersche92/lazyllama"
+documentation = "https://docs.rs/lazyllama"
+keywords = ["ollama", "tui", "ai", "llama", "terminal"]
+categories = ["command-line-utilities", "asynchronous"]
+readme = "README.md"
 
 [dependencies]
 ollama-rs = { version = "0.3.3", features = ["stream"] }
