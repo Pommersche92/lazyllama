@@ -26,10 +26,6 @@
 //!
 //! Ein leichtgewichtiger TUI-Client für Ollama-KI-Modelle.
 //! Erlaubt das Streamen von Antworten, Syntax-Highlighting für Code und automatisches Logging.
-/*
- * Copyright (C) 2026 Raimo Geisel
- * License: GPL-3.0-or-later
- */
 
 mod app;
 mod ui;
