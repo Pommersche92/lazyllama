@@ -71,6 +71,3 @@ This project is licensed under the **GPL-2.0-or-later**. See the [LICENSE](LICEN
 ---
 
 *Developed by Raimo Geisel (2026)*
-
-```
-
