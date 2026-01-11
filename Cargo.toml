@@ -1,0 +1,15 @@
+[package]
+name = "lazyllama"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+ollama-rs = { version = "0.3.3", features = ["stream"] }
+ratatui = "0.26"
+crossterm = "0.27"
+tokio = { version = "1", features = ["full"] }
+tokio-stream = "0.1"
+anyhow = "1.0"
+regex = "1"
+chrono = "0.4"
+dirs = "5.0"
