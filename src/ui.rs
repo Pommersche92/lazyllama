@@ -71,14 +71,35 @@ pub fn ui(f: &mut Frame, app: &mut App) {
         .constraints([Constraint::Percentage(25), Constraint::Percentage(75)])
         .split(root_layout[1]);
 
-    // Modellliste rendern
+    // Modellliste rendern mit erweiterten Informationen
+    let selected_model = app.list_state.selected()
+        .and_then(|i| app.models.get(i))
+        .cloned()
+        .unwrap_or_else(|| "None".to_string());
+    
     let items: Vec<ListItem> = app
         .models
         .iter()
-        .map(|m| ListItem::new(m.as_str()))
+        .enumerate()
+        .map(|(i, m)| {
+            let is_selected = app.list_state.selected() == Some(i);
+            let history_len = app.model_histories.get(m).map(|h| h.len()).unwrap_or(0);
+            let display = if history_len > 0 {
+                format!("{} [{}]", m, if history_len > 1000 { "📝" } else { "📄" })
+            } else {
+                m.clone()
+            };
+            ListItem::new(display)
+                .style(if is_selected {
+                    Style::default().fg(Color::Yellow)
+                } else {
+                    Style::default()
+                })
+        })
         .collect();
     let list = List::new(items)
-        .block(Block::default().borders(Borders::ALL).title(" Models "))
+        .block(Block::default().borders(Borders::ALL)
+            .title(format!(" Models ({}) ", app.models.len())))
         .highlight_style(
             Style::default()
                 .bg(Color::Blue)
@@ -151,7 +172,7 @@ pub fn ui(f: &mut Frame, app: &mut App) {
         chat_chunks[1],
     );
     f.render_widget(
-        Paragraph::new(" C-q: Quit | C-c: Clear | C-s: AutoScroll | PgUp/Dn: Scroll ")
+        Paragraph::new(format!(" C-q: Quit | C-c: Clear | C-s: AutoScroll | PgUp/Dn: Scroll | ↑↓: Switch Model [{}] ", selected_model))
             .style(Style::default().bg(Color::White).fg(Color::Black)),
         root_layout[2],
     );

@@ -30,6 +30,7 @@
 use anyhow::Result;
 use ollama_rs::{generation::completion::request::GenerationRequest, Ollama};
 use ratatui::{backend::CrosstermBackend, widgets::ListState, Terminal};
+use std::collections::HashMap;
 use std::io;
 use std::time::Instant;
 use tokio_stream::StreamExt;
@@ -44,6 +45,12 @@ pub struct App {
     pub input: String,
     /// Der gesamte bisherige Chatverlauf als String.
     pub history: String,
+    /// Separate Input-Buffer für jedes LLM-Modell.
+    pub model_inputs: HashMap<String, String>,
+    /// Separate History-Buffer für jedes LLM-Modell.
+    pub model_histories: HashMap<String, String>,
+    /// Separate Scroll-Positionen für jedes LLM-Modell.
+    pub model_scrolls: HashMap<String, u16>,
     /// Die aktuelle vertikale Scroll-Position im Verlauf.
     pub scroll: u16,
     /// Flag, ob die Ansicht automatisch zum Ende springen soll.
@@ -65,6 +72,9 @@ impl App {
             list_state: ListState::default(),
             input: String::new(),
             history: String::new(),
+            model_inputs: HashMap::new(),
+            model_histories: HashMap::new(),
+            model_scrolls: HashMap::new(),
             scroll: 0,
             autoscroll: true,
             is_loading: false,
@@ -79,10 +89,75 @@ impl App {
     pub async fn refresh_models(&mut self) {
         if let Ok(models) = self.ollama.list_local_models().await {
             self.models = models.into_iter().map(|m| m.name).collect::<Vec<String>>();
+            
+            // Initialisiere Buffer für neue Modelle
+            for model in &self.models {
+                self.model_inputs.entry(model.clone()).or_insert_with(String::new);
+                self.model_histories.entry(model.clone()).or_insert_with(String::new);
+                self.model_scrolls.entry(model.clone()).or_insert(0);
+            }
+            
             if !self.models.is_empty() {
                 self.list_state.select(Some(0));
+                self.load_current_model_buffers();
             }
         }
+    }
+
+    /// Speichert die aktuellen Buffer in den per-Modell-Speicher.
+    pub fn save_current_model_buffers(&mut self) {
+        if let Some(index) = self.list_state.selected() {
+            if let Some(model) = self.models.get(index) {
+                self.model_inputs.insert(model.clone(), self.input.clone());
+                self.model_histories.insert(model.clone(), self.history.clone());
+                self.model_scrolls.insert(model.clone(), self.scroll);
+            }
+        }
+    }
+
+    /// Lädt die Buffer für das aktuell gewählte Modell.
+    pub fn load_current_model_buffers(&mut self) {
+        if let Some(index) = self.list_state.selected() {
+            if let Some(model) = self.models.get(index) {
+                self.input = self.model_inputs.get(model).cloned().unwrap_or_default();
+                self.history = self.model_histories.get(model).cloned().unwrap_or_default();
+                self.scroll = *self.model_scrolls.get(model).unwrap_or(&0);
+            }
+        }
+    }
+
+    /// Wechselt zum nächsten Modell (mit Pfeiltaste nach unten).
+    pub fn select_next_model(&mut self) {
+        self.save_current_model_buffers();
+        let i = match self.list_state.selected() {
+            Some(i) => {
+                if i >= self.models.len() - 1 {
+                    0
+                } else {
+                    i + 1
+                }
+            }
+            None => 0,
+        };
+        self.list_state.select(Some(i));
+        self.load_current_model_buffers();
+    }
+
+    /// Wechselt zum vorherigen Modell (mit Pfeiltaste nach oben).
+    pub fn select_previous_model(&mut self) {
+        self.save_current_model_buffers();
+        let i = match self.list_state.selected() {
+            Some(i) => {
+                if i == 0 {
+                    self.models.len() - 1
+                } else {
+                    i - 1
+                }
+            }
+            None => 0,
+        };
+        self.list_state.select(Some(i));
+        self.load_current_model_buffers();
     }
 
     /// Sendet die aktuelle Eingabe an das gewählte Modell und streamt die Antwort.
@@ -99,10 +174,14 @@ impl App {
 
             self.history.push_str(&format!("\nYOU: {}\n\nAI: ", prompt));
             self.input.clear();
+            
+            // Speichere die aktualisierten Buffer für das aktuelle Modell
+            self.save_current_model_buffers();
+            
             self.is_loading = true;
             self.autoscroll = true;
 
-            let request = GenerationRequest::new(model, prompt);
+            let request = GenerationRequest::new(model.clone(), prompt);
             let mut stream = self.ollama.generate_stream(request).await?;
 
             while let Some(res) = stream.next().await {
@@ -115,6 +194,9 @@ impl App {
             }
             self.history.push_str("\n---\n");
             self.is_loading = false;
+            
+            // Speichere die finale History für dieses Modell
+            self.save_current_model_buffers();
         }
         Ok(())
     }

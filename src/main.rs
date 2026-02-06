@@ -62,53 +62,45 @@ async fn main() -> Result<()> {
                 match (key.code, is_ctrl) {
                     (KeyCode::Char('q'), true) => should_quit = true,
                     (KeyCode::Char('c'), true) => {
+                        // Lösche nur den aktuellen Modell-Buffer
                         app.history.clear();
                         app.scroll = 0;
                         app.autoscroll = true;
+                        app.save_current_model_buffers();
                     }
                     (KeyCode::Char('s'), true) => app.autoscroll = !app.autoscroll,
                     (KeyCode::Up, _) => {
-                        let i = match app.list_state.selected() {
-                            Some(i) => {
-                                if i == 0 {
-                                    app.models.len() - 1
-                                } else {
-                                    i - 1
-                                }
-                            }
-                            None => 0,
-                        };
-                        app.list_state.select(Some(i));
+                        app.select_previous_model();
                     }
                     (KeyCode::Down, _) => {
-                        let i = match app.list_state.selected() {
-                            Some(i) => {
-                                if i >= app.models.len() - 1 {
-                                    0
-                                } else {
-                                    i + 1
-                                }
-                            }
-                            None => 0,
-                        };
-                        app.list_state.select(Some(i));
+                        app.select_next_model();
                     }
                     (KeyCode::PageUp, _) => {
                         app.autoscroll = false;
                         app.scroll = app.scroll.saturating_sub(5);
+                        // Speichere die neue Scroll-Position für das aktuelle Modell
+                        app.save_current_model_buffers();
                     }
                     (KeyCode::PageDown, _) => {
                         app.autoscroll = false;
                         app.scroll = app.scroll.saturating_add(5);
+                        // Speichere die neue Scroll-Position für das aktuelle Modell
+                        app.save_current_model_buffers();
                     }
                     (KeyCode::Enter, _) => {
                         if !app.input.is_empty() && !app.is_loading {
                             app.send_query(&mut terminal).await?;
                         }
                     }
-                    (KeyCode::Char(c), false) => app.input.push(c),
+                    (KeyCode::Char(c), false) => {
+                        app.input.push(c);
+                        // Speichere die Änderung des Input-Buffers
+                        app.save_current_model_buffers();
+                    }
                     (KeyCode::Backspace, _) => {
                         app.input.pop();
+                        // Speichere die Änderung des Input-Buffers
+                        app.save_current_model_buffers();
                     }
                     _ => {}
                 }
@@ -122,6 +114,12 @@ async fn main() -> Result<()> {
         LeaveAlternateScreen,
         DisableMouseCapture
     )?;
+    
+    // Speichere die aktuellen Buffer vor dem Beenden
+    app.save_current_model_buffers();
+    
+    // Speichere sowohl die allgemeine History als auch die modellspezifischen Histories
     utils::save_history_to_file(&app.history)?;
+    utils::save_model_histories(&app.model_histories)?;
     Ok(())
 }
