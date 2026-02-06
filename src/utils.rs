@@ -39,7 +39,6 @@
 use anyhow::Result;
 use chrono::Local;
 use std::fs;
-use std::collections::HashMap;
 
 /// Saves conversation history to a timestamped file in the local data directory.
 ///
