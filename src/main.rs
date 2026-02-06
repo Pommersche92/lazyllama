@@ -100,10 +100,11 @@ async fn main() -> Result<()> {
     let mut app = App::new().await;
     let mut should_quit = false;
 
-    while !should_quit {
-        terminal.draw(|f| ui::ui(f, &mut app))?;
+    // Initial draw
+    terminal.draw(|f| ui::ui(f, &mut app))?;
 
-        if event::poll(Duration::from_millis(50))? {
+    while !should_quit {
+        if event::poll(Duration::from_millis(100))? {
             if let Event::Key(key) = event::read()? {
                 let is_ctrl = key.modifiers.contains(KeyModifiers::CONTROL);
                 match (key.code, is_ctrl) {
@@ -125,14 +126,10 @@ async fn main() -> Result<()> {
                     (KeyCode::PageUp, _) => {
                         app.autoscroll = false;
                         app.scroll = app.scroll.saturating_sub(5);
-                        // Speichere die neue Scroll-Position für das aktuelle Modell
-                        app.save_current_model_buffers();
                     }
                     (KeyCode::PageDown, _) => {
                         app.autoscroll = false;
                         app.scroll = app.scroll.saturating_add(5);
-                        // Speichere die neue Scroll-Position für das aktuelle Modell
-                        app.save_current_model_buffers();
                     }
                     (KeyCode::Enter, _) => {
                         if !app.input.is_empty() && !app.is_loading {
@@ -141,17 +138,19 @@ async fn main() -> Result<()> {
                     }
                     (KeyCode::Char(c), false) => {
                         app.input.push(c);
-                        // Speichere die Änderung des Input-Buffers
-                        app.save_current_model_buffers();
                     }
                     (KeyCode::Backspace, _) => {
                         app.input.pop();
-                        // Speichere die Änderung des Input-Buffers
-                        app.save_current_model_buffers();
                     }
                     _ => {}
                 }
+                
+                // Only redraw after an actual event occurred
+                terminal.draw(|f| ui::ui(f, &mut app))?;
             }
+        } else if app.is_loading {
+            // Redraw during loading for spinner animation
+            terminal.draw(|f| ui::ui(f, &mut app))?;
         }
     }
 
