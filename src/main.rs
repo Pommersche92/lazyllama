@@ -24,8 +24,29 @@
 
 //! # LazyLlama
 //!
-//! Ein leichtgewichtiger TUI-Client für Ollama-KI-Modelle.
-//! Erlaubt das Streamen von Antworten, Syntax-Highlighting für Code und automatisches Logging.
+//! A lightweight Terminal User Interface (TUI) client for Ollama AI models.
+//! Provides real-time streaming responses, syntax highlighting for code blocks,
+//! and automatic logging of chat sessions.
+//!
+//! ## Features
+//! 
+//! - Real-time streaming of AI model responses
+//! - Markdown and code syntax highlighting
+//! - Smart scrolling with autoscroll and manual modes
+//! - Model switching with separate buffer management per model
+//! - Automatic session logging
+//!
+//! ## Usage
+//!
+//! Run the application and use the following controls:
+//! - `Ctrl+Q`: Quit the application
+//! - `Ctrl+C`: Clear current model's chat history
+//! - `Ctrl+S`: Toggle autoscroll mode
+//! - `Arrow Keys`: Switch between AI models
+//! - `Page Up/Down`: Manual scrolling
+//! - `Enter`: Send message to AI
+//!
+//! Each AI model maintains separate input buffers, chat histories, and scroll positions.
 
 mod app;
 mod ui;
@@ -41,7 +62,33 @@ use crossterm::{
 use ratatui::{backend::CrosstermBackend, Terminal};
 use std::{io, time::Duration};
 
-/// Hauptfunktion: Initialisiert das Terminal und startet den Event-Loop.
+/// Main entry point for the LazyLlama application.
+///
+/// Initializes the terminal interface, sets up the event loop, and handles user input.
+/// The function configures crossterm for raw mode terminal input, creates a ratatui
+/// terminal backend, and manages the application lifecycle including proper cleanup
+/// and history saving upon exit.
+///
+/// # Returns
+///
+/// Returns `Ok(())` on successful execution or an `anyhow::Error` if initialization
+/// or runtime errors occur.
+///
+/// # Event Handling
+///
+/// The main loop processes the following key combinations:
+/// - `Ctrl+Q`: Graceful application exit
+/// - `Ctrl+C`: Clear current model's buffer
+/// - `Ctrl+S`: Toggle autoscroll behavior
+/// - `Up/Down Arrow`: Switch between AI models with buffer persistence
+/// - `Page Up/Down`: Manual scrolling with autoscroll disable
+/// - `Enter`: Send query to selected AI model
+/// - `Backspace`: Delete characters from input
+/// - `Character keys`: Add text to input buffer
+///
+/// # Error Handling
+///
+/// Properly handles terminal setup/teardown and ensures cleanup even on errors.
 #[tokio::main]
 async fn main() -> Result<()> {
     enable_raw_mode()?;

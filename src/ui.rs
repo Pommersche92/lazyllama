@@ -22,10 +22,20 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-//! Funktionen zur Gestaltung der Terminal-Benutzeroberfläche.
+//! Terminal User Interface rendering and layout functions.
 //!
-//! Dieses Modul übernimmt das Rendering der Widgets, das Parsing von Markdown
-//! und die Berechnung der Scroll-Position.
+//! This module handles all aspects of the visual presentation including:
+//! - Widget rendering and layout management
+//! - Markdown parsing and syntax highlighting
+//! - Scroll position calculation and management
+//! - Real-time UI updates during AI response streaming
+//!
+//! The UI is built with Ratatui and features:
+//! - Responsive layout that adapts to terminal size
+//! - Code block highlighting with language detection
+//! - Smart scrolling with autoscroll and manual modes
+//! - Model status indicators and selection highlighting
+//! - Animated loading indicators
 
 use crate::app::App;
 use ratatui::{
@@ -37,7 +47,10 @@ use ratatui::{
 };
 use regex::Regex;
 
-/// Das ASCII-Banner, das oben in der Anwendung angezeigt wird.
+/// ASCII art banner displayed at the top of the application.
+/// 
+/// This constant contains the stylized "LazyLlama" text that appears
+/// in the header section of the terminal interface.
 pub const BANNER: &str = r#"
 | |    __ _  ______  __| |    | | __ _ _ __ ___   __ _
 | |   / _` ||_  /\ \/ /| |    | |/ _` | '_ ` _ \ / _` |
@@ -45,10 +58,55 @@ pub const BANNER: &str = r#"
 |_____\__,_|/___| /_/  |_____||_|\__,_|_| |_| |_|\__,_|
 "#;
 
-/// Haupt-Rendering-Funktion für Ratatui.
+/// Main rendering function for the Ratatui terminal interface.
 ///
-/// Zeichnet das Banner, die Modellliste, den Chatverlauf (mit Markdown-Support)
-/// sowie das Eingabefeld inklusive Spinner.
+/// This function orchestrates the complete UI layout and rendering process,
+/// creating a responsive three-panel interface with header, main content,
+/// and status bar. The layout dynamically adjusts to terminal size and
+/// provides real-time updates during AI interactions.
+///
+/// # Arguments
+///
+/// * `f` - Mutable reference to the Ratatui frame for widget rendering
+/// * `app` - Mutable reference to application state for data access and updates
+///
+/// # Layout Structure
+///
+/// ```text
+/// ┌─────────────────────────────────────────┐
+/// │              ASCII Banner               │ 7 lines
+/// ├─────────────┬───────────────────────────┤
+/// │   Models    │    Conversation History   │ Flexible
+/// │   (25%)     │         (75%)             │ height
+/// │             ├───────────────────────────┤
+/// │             │       Input Field         │ 3 lines
+/// ├─────────────┴───────────────────────────┤
+/// │            Status Bar                   │ 1 line
+/// └─────────────────────────────────────────┘
+/// ```
+///
+/// # Features
+///
+/// - **Model List**: Shows available AI models with status indicators
+/// - **Chat History**: Displays conversation with markdown and code highlighting
+/// - **Input Field**: Text entry with loading animation and status
+/// - **Status Bar**: Keyboard shortcuts and current model information
+/// - **Responsive Design**: Adapts to terminal size changes
+/// - **Smart Scrolling**: Auto-scroll with manual override capability
+///
+/// # Visual Elements
+///
+/// - Models with conversation history show file icons (📝/📄)
+/// - Selected model highlighted with different colors
+/// - Loading state shows animated spinner in input field
+/// - Scroll status indicator in conversation header
+/// - Color-coded borders for different UI states
+///
+/// # Performance
+///
+/// This function is called frequently (up to 20fps during streaming)
+/// and is optimized for minimal computational overhead while providing
+/// smooth visual feedback.
 pub fn ui(f: &mut Frame, app: &mut App) {
     let root_layout = Layout::default()
         .direction(Direction::Vertical)
@@ -178,8 +236,49 @@ pub fn ui(f: &mut Frame, app: &mut App) {
     );
 }
 
-/// Parst den History-String und wandelt ihn in ein formatiertes Ratatui-[Text]-Objekt um.
-/// Erkennt Code-Blöcke und delegiert einfachen Text an [`process_styled_text`].
+/// Parses conversation history and converts it into a formatted Ratatui Text object.
+///
+/// This function processes the raw conversation history string and applies syntax
+/// highlighting for markdown elements, particularly code blocks. It uses regex
+/// pattern matching to identify code blocks and delegates regular text processing
+/// to [`process_styled_text`].
+///
+/// # Arguments
+///
+/// * `history` - The raw conversation history string containing user and AI messages
+///
+/// # Returns
+///
+/// A formatted [`Text`] object ready for rendering with Ratatui, containing:
+/// - Syntax-highlighted code blocks with language-specific borders
+/// - Styled user/AI message labels with appropriate colors
+/// - Markdown formatting for headers and emphasis
+///
+/// # Code Block Processing
+///
+/// Code blocks are detected using the regex pattern:
+/// ```regex
+/// (?s)```(?P<lang>\w+)?\n(?P<code>.*?)```
+/// ```
+///
+/// Each code block is rendered with:
+/// - Language-specific header: `┌── rust ──`
+/// - Yellow-colored borders and prefixes
+/// - Preserved indentation and formatting
+/// - Consistent visual separation from regular text
+///
+/// # Performance
+///
+/// Uses single-pass regex processing with efficient string slicing to minimize
+/// allocations. The function handles large conversation histories gracefully
+/// without significant performance degradation.
+///
+/// # Example Input/Output
+///
+/// ```text
+/// Input: "YOU: Hello\n\nAI: Here's some code:\n\n```rust\nfn main() {}\n```"
+/// Output: Formatted Text with colored labels and bordered code block
+/// ```
 fn parse_history<'a>(history: &'a str) -> Text<'a> {
     let code_block_re = Regex::new(r"(?s)```(?P<lang>\w+)?\n(?P<code>.*?)```").unwrap();
     let mut text = Text::default();
@@ -215,7 +314,44 @@ fn parse_history<'a>(history: &'a str) -> Text<'a> {
     text
 }
 
-/// Verarbeitet normalen Text zeilenweise und wendet einfaches Styling für Labels und Markdown-Header an.
+/// Processes regular text line-by-line and applies styling for labels and markdown headers.
+///
+/// This function handles non-code text formatting, applying appropriate colors and
+/// styles to different types of content including conversation labels, markdown
+/// headers, and regular text. It preserves the original text structure while
+/// adding visual styling.
+///
+/// # Arguments
+///
+/// * `text` - The raw text string to be processed and styled
+/// * `target` - Mutable reference to the Text object where styled content is appended
+///
+/// # Styling Rules
+///
+/// - **Headers**: Lines starting with `###` are converted to bullet points (`•`) in bold white
+/// - **User Messages**: "YOU:" prefix is styled in bold magenta, rest in default color
+/// - **AI Messages**: "AI:" prefix is styled in bold cyan, rest in default color
+/// - **Regular Text**: Rendered without special styling in default terminal colors
+///
+/// # Text Processing
+///
+/// The function processes each line individually and:
+/// 1. Trims whitespace to detect line types
+/// 2. Creates appropriate styled spans based on content
+/// 3. Preserves original text after removing formatting markers
+/// 4. Combines spans into cohesive line objects
+/// 
+/// # Color Scheme
+///
+/// - Headers: White with bold modifier
+/// - User labels: Magenta with bold modifier
+/// - AI labels: Cyan with bold modifier
+/// - Regular text: Default terminal colors
+///
+/// # Side Effects
+///
+/// Appends styled content directly to the provided `target` Text object,
+/// allowing for incremental building of complex formatted documents.
 fn process_styled_text<'a>(text: &'a str, target: &mut Text<'a>) {
     for line in text.lines() {
         let trimmed = line.trim();
