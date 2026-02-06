@@ -8,7 +8,7 @@
 * **Markdown Support:** Automatic formatting for headers, lists, and bold text.
 * **Code Highlighting:** Syntax blocks are visually separated with custom borders and background colors.
 * **Smart Scrolling:** * `AUTOSCROLL`: Automatically follows the AI output.
-    * `MANUAL SCROLL`: Locks the view (🔒) when you use PageUp/Down, allowing you to read previous messages undisturbed.
+  * `MANUAL SCROLL`: Locks the view (🔒) when you use PageUp/Down, allowing you to read previous messages undisturbed.
 * **Model Management:** Easily switch between installed Ollama models using arrow keys with **separate input/output buffers per model**.
 * **Smart Buffer Management:** Each LLM maintains its own chat history, input text, and scroll position.
 * **Automatic Logging:** Every chat session is automatically saved as a text file in `~/.local/share/lazyllama/` (both combined and per-model histories).
@@ -17,10 +17,12 @@
 ## 🚀 Installation
 
 ### Prerequisites
+
 * [Rust](https://rustup.rs/) (Stable)
 * [Ollama](https://ollama.com/) (must be running in the background)
 
 ### Build from Source
+
 1. Clone the repository:
 
 ```bash
@@ -71,12 +73,14 @@ This project is licensed under the **GPL-2.0-or-later**. See the [LICENSE](LICEN
 ## 📝 Changelog
 
 ### v0.2.0 - February 2026
+
 * **🎯 Per-Model Buffer Management**: Each LLM now maintains separate input buffers, chat histories, and scroll positions
 * **🔄 Smart Model Switching**: Arrow keys now seamlessly switch between models while preserving individual states  
 * **💾 Enhanced Logging**: Separate history files are saved for each model on application exit
 * **🎨 Improved UI**: Model list shows buffer status indicators and current model highlighting
 
 ### v0.1.0 - Initial Release
+
 * Basic TUI interface for Ollama
 * Real-time streaming responses
 * Markdown and code highlighting
