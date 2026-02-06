@@ -78,6 +78,8 @@ This project is licensed under the **GPL-2.0-or-later**. See the [LICENSE](LICEN
 * **🔄 Smart Model Switching**: Arrow keys now seamlessly switch between models while preserving individual states  
 * **💾 Enhanced Logging**: Separate history files are saved for each model on application exit
 * **🎨 Improved UI**: Model list shows buffer status indicators and current model highlighting
+* **📖 Translated Documentation**: Documentation comments in source code translated from german to english via AI
+  * Please report any gramatical errors, AI weirdness and/or other inaccuracies in the github issues.
 
 ### v0.1.0 - Initial Release
 
