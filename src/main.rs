@@ -55,7 +55,7 @@ mod utils;
 use crate::app::App;
 use anyhow::Result;
 use crossterm::{
-    event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyModifiers},
+    event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyEventKind, KeyModifiers},
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
@@ -106,6 +106,11 @@ async fn main() -> Result<()> {
     while !should_quit {
         if event::poll(Duration::from_millis(100))? {
             if let Event::Key(key) = event::read()? {
+                // Windows-specific fix: Only process KeyPress events to prevent double input
+                if key.kind != KeyEventKind::Press {
+                    continue;
+                }
+                
                 let is_ctrl = key.modifiers.contains(KeyModifiers::CONTROL);
                 match (key.code, is_ctrl) {
                     (KeyCode::Char('q'), true) => should_quit = true,
