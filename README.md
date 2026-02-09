@@ -47,6 +47,16 @@ cargo install --path .
 | `C-s` | Manually toggle Autoscroll |
 | `↑` / `↓` | **Switch between AI Models** (loads separate buffers per model) |
 | `PgUp` / `PgDn` | Scroll history (activates Manual Mode) |
+| `←` / `→` | Move cursor left/right in the input field |
+| `Home` / `End` | Jump to start/end of the input line |
+| `Ctrl` + `←` / `→` | Move cursor word-wise |
+| `Backspace` | Delete character before the cursor |
+| `Delete` | Delete character after the cursor |
+| `Ctrl` + `Backspace` | Delete previous word |
+| `Ctrl` + `Delete` | Delete next word |
+
+Optional debug:
+* `LAZYLLAMA_DEBUG_KEYS=1` shows key/scroll/render info in the status bar.
 
 ## 🛠 Project Structure
 
@@ -75,6 +85,12 @@ This project is licensed under the **GPL-2.0-or-later**. See the [LICENSE](LICEN
 ### v0.3.0 - February 2026
 
 * **🧹 Clean Chat Redraw**: Clears the chat area before rendering to prevent leftover characters when scrolling
+* **⌨️ Input Cursor**: Horizontal cursor navigation with Left/Right and a blinking caret in the input field
+* **🏁 Home/End Navigation**: Jump to start/end of the input line
+* **🧭 Word-wise Movement**: Ctrl+Left/Right moves by words with smart separators
+* **🗑 Word Deletion**: Ctrl+Backspace deletes previous word, Ctrl+Delete deletes next word
+* **⌦ Delete Key Support**: Delete removes the character after the cursor
+* **🧪 Dev Key Debug Mode**: Optional status bar debug via `LAZYLLAMA_DEBUG_KEYS=1`
 
 ### v0.2.0 - February 2026
 

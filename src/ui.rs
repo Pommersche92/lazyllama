@@ -108,6 +108,9 @@ pub const BANNER: &str = r#"
 /// and is optimized for minimal computational overhead while providing
 /// smooth visual feedback.
 pub fn ui(f: &mut Frame, app: &mut App) {
+    if app.debug_keys {
+        app.render_count = app.render_count.wrapping_add(1);
+    }
     let root_layout = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
@@ -217,8 +220,36 @@ pub fn ui(f: &mut Frame, app: &mut App) {
         " > Input ".into()
     };
 
+    let input_chars: Vec<char> = app.input.chars().collect();
+    let cursor_pos = app.cursor_pos.min(input_chars.len());
+    let mut input_spans = Vec::new();
+
+    if cursor_pos > 0 {
+        let before: String = input_chars[..cursor_pos].iter().collect();
+        input_spans.push(Span::raw(before));
+    }
+
+    let cursor_style = Style::default().add_modifier(Modifier::REVERSED);
+    if cursor_pos < input_chars.len() {
+        let ch = input_chars[cursor_pos].to_string();
+        if app.cursor_visible {
+            input_spans.push(Span::styled(ch, cursor_style));
+        } else {
+            input_spans.push(Span::raw(ch));
+        }
+
+        if cursor_pos + 1 < input_chars.len() {
+            let after: String = input_chars[cursor_pos + 1..].iter().collect();
+            input_spans.push(Span::raw(after));
+        }
+    } else if app.cursor_visible {
+        input_spans.push(Span::styled(" ", cursor_style));
+    }
+
+    let input_text = Text::from(Line::from(input_spans));
+
     f.render_widget(
-        Paragraph::new(app.input.as_str()).block(
+        Paragraph::new(input_text).block(
             Block::default()
                 .borders(Borders::ALL)
                 .title(input_title)
@@ -230,9 +261,20 @@ pub fn ui(f: &mut Frame, app: &mut App) {
         ),
         chat_chunks[1],
     );
+    let mut status = format!(
+        " C-q: Quit | C-c: Clear | C-s: AutoScroll | PgUp/Dn: Scroll | ↑↓: Switch Model [{}] ",
+        selected_model
+    );
+    if app.debug_keys {
+        let max_scroll = total_lines.saturating_sub(visible_height);
+        let last_key = app.debug_last_key.as_deref().unwrap_or("-");
+        status.push_str(&format!(
+            "| Scroll: {}/{} | Render: {} | Key: {} ",
+            app.scroll, max_scroll, app.render_count, last_key
+        ));
+    }
     f.render_widget(
-        Paragraph::new(format!(" C-q: Quit | C-c: Clear | C-s: AutoScroll | PgUp/Dn: Scroll | ↑↓: Switch Model [{}] ", selected_model))
-            .style(Style::default().bg(Color::White).fg(Color::Black)),
+        Paragraph::new(status).style(Style::default().bg(Color::White).fg(Color::Black)),
         root_layout[2],
     );
 }

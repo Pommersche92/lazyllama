@@ -110,6 +110,10 @@ async fn main() -> Result<()> {
                 if key.kind != KeyEventKind::Press {
                     continue;
                 }
+
+                if app.debug_keys {
+                    app.debug_last_key = Some(format!("{:?}", key));
+                }
                 
                 let is_ctrl = key.modifiers.contains(KeyModifiers::CONTROL);
                 match (key.code, is_ctrl) {
@@ -122,6 +126,18 @@ async fn main() -> Result<()> {
                         app.save_current_model_buffers();
                     }
                     (KeyCode::Char('s'), true) => app.autoscroll = !app.autoscroll,
+                    (KeyCode::Left, true) => {
+                        app.move_cursor_word_left();
+                    }
+                    (KeyCode::Right, true) => {
+                        app.move_cursor_word_right();
+                    }
+                    (KeyCode::Home, _) => {
+                        app.move_cursor_home();
+                    }
+                    (KeyCode::End, _) => {
+                        app.move_cursor_end();
+                    }
                     (KeyCode::Up, _) => {
                         app.select_previous_model();
                     }
@@ -136,16 +152,35 @@ async fn main() -> Result<()> {
                         app.autoscroll = false;
                         app.scroll = app.scroll.saturating_add(5);
                     }
+                    (KeyCode::Left, _) => {
+                        app.move_cursor_left();
+                    }
+                    (KeyCode::Right, _) => {
+                        app.move_cursor_right();
+                    }
+                    (KeyCode::Backspace, true) => {
+                        app.delete_word_left();
+                    }
+                    (KeyCode::Char('h'), true) => {
+                        // Kitty maps Ctrl+Backspace to Ctrl+H, so handle it as word deletion.
+                        app.delete_word_left();
+                    }
+                    (KeyCode::Delete, true) => {
+                        app.delete_word_right();
+                    }
+                    (KeyCode::Delete, _) => {
+                        app.delete_forward();
+                    }
                     (KeyCode::Enter, _) => {
                         if !app.input.is_empty() && !app.is_loading {
                             app.send_query(&mut terminal).await?;
                         }
                     }
                     (KeyCode::Char(c), false) => {
-                        app.input.push(c);
+                        app.insert_char(c);
                     }
                     (KeyCode::Backspace, _) => {
-                        app.input.pop();
+                        app.backspace();
                     }
                     _ => {}
                 }
@@ -155,6 +190,8 @@ async fn main() -> Result<()> {
             }
         } else if app.is_loading {
             // Redraw during loading for spinner animation
+            terminal.draw(|f| ui::ui(f, &mut app))?;
+        } else if app.update_cursor_blink() {
             terminal.draw(|f| ui::ui(f, &mut app))?;
         }
     }

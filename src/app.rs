@@ -37,6 +37,7 @@ use anyhow::Result;
 use ollama_rs::{generation::completion::request::GenerationRequest, Ollama};
 use ratatui::{backend::CrosstermBackend, widgets::ListState, Terminal};
 use std::collections::HashMap;
+use std::env;
 use std::io;
 use std::time::Instant;
 use tokio_stream::StreamExt;
@@ -59,12 +60,16 @@ pub struct App {
     pub history: String,
     /// Separate input buffers maintained for each LLM model.
     pub model_inputs: HashMap<String, String>,
+    /// Separate cursor positions maintained for each LLM model.
+    pub model_cursors: HashMap<String, usize>,
     /// Separate conversation histories maintained for each LLM model.
     pub model_histories: HashMap<String, String>,
     /// Separate scroll positions maintained for each LLM model.
     pub model_scrolls: HashMap<String, u16>,
     /// Current vertical scroll position in the conversation history.
     pub scroll: u16,
+    /// Current cursor position in the input field (character index).
+    pub cursor_pos: usize,
     /// Flag indicating whether the view should automatically scroll to the bottom.
     pub autoscroll: bool,
     /// Indicates whether an AI query is currently being processed.
@@ -73,6 +78,16 @@ pub struct App {
     pub ollama: Ollama,
     /// Timestamp of application start (used for UI animations like spinner).
     pub start_time: Instant,
+    /// Timestamp of last cursor blink toggle.
+    pub last_cursor_blink: Instant,
+    /// Whether the input cursor should be visible this frame.
+    pub cursor_visible: bool,
+    /// Enables on-screen debug info when true.
+    pub debug_keys: bool,
+    /// Last key event debug string (when enabled).
+    pub debug_last_key: Option<String>,
+    /// Frame counter for render debugging.
+    pub render_count: u64,
 }
 
 impl App {
@@ -102,12 +117,17 @@ impl App {
     /// ```
     pub async fn new() -> Self {
         let ollama = Ollama::default();
+        let debug_keys = env::var("LAZYLLAMA_DEBUG_KEYS")
+            .map(|v| v != "0" && v.to_lowercase() != "false")
+            .unwrap_or(false);
         let mut app = App {
             models: Vec::new(),
             list_state: ListState::default(),
             input: String::new(),
+            cursor_pos: 0,
             history: String::new(),
             model_inputs: HashMap::new(),
+            model_cursors: HashMap::new(),
             model_histories: HashMap::new(),
             model_scrolls: HashMap::new(),
             scroll: 0,
@@ -115,6 +135,11 @@ impl App {
             is_loading: false,
             ollama,
             start_time: Instant::now(),
+            last_cursor_blink: Instant::now(),
+            cursor_visible: true,
+            debug_keys,
+            debug_last_key: None,
+            render_count: 0,
         };
         app.refresh_models().await;
         app
@@ -148,6 +173,7 @@ impl App {
             // Initialisiere Buffer für neue Modelle
             for model in &self.models {
                 self.model_inputs.entry(model.clone()).or_insert_with(String::new);
+                self.model_cursors.entry(model.clone()).or_insert(0);
                 self.model_histories.entry(model.clone()).or_insert_with(String::new);
                 self.model_scrolls.entry(model.clone()).or_insert(0);
             }
@@ -183,6 +209,7 @@ impl App {
         if let Some(index) = self.list_state.selected() {
             if let Some(model) = self.models.get(index) {
                 self.model_inputs.insert(model.clone(), self.input.clone());
+                self.model_cursors.insert(model.clone(), self.cursor_pos);
                 self.model_histories.insert(model.clone(), self.history.clone());
                 self.model_scrolls.insert(model.clone(), self.scroll);
             }
@@ -214,10 +241,241 @@ impl App {
         if let Some(index) = self.list_state.selected() {
             if let Some(model) = self.models.get(index) {
                 self.input = self.model_inputs.get(model).cloned().unwrap_or_default();
+                self.cursor_pos = *self.model_cursors.get(model).unwrap_or(&0);
                 self.history = self.model_histories.get(model).cloned().unwrap_or_default();
                 self.scroll = *self.model_scrolls.get(model).unwrap_or(&0);
+                self.clamp_cursor();
             }
         }
+    }
+
+    /// Inserts a character at the current cursor position.
+    ///
+    /// This method performs a character-aware insertion (not byte-based),
+    /// advances the cursor by one character, and resets the blink timer
+    /// so the caret remains visible after input.
+    pub fn insert_char(&mut self, c: char) {
+        let byte_idx = self.char_index_to_byte_index(self.cursor_pos);
+        self.input.insert(byte_idx, c);
+        self.cursor_pos = self.cursor_pos.saturating_add(1);
+        self.reset_cursor_blink();
+    }
+
+    /// Deletes the character immediately before the cursor.
+    ///
+    /// This is the standard Backspace behavior: it removes one character to
+    /// the left of the caret, shifts the cursor left by one, and resets the
+    /// blink timer.
+    pub fn backspace(&mut self) {
+        if self.cursor_pos == 0 {
+            return;
+        }
+        let remove_idx = self.cursor_pos - 1;
+        let byte_idx = self.char_index_to_byte_index(remove_idx);
+        self.input.remove(byte_idx);
+        self.cursor_pos = self.cursor_pos.saturating_sub(1);
+        self.reset_cursor_blink();
+    }
+
+    /// Deletes the word immediately before the cursor.
+    ///
+    /// Word boundaries use `is_word_char` rules, treating non-alphanumeric
+    /// characters (except underscore) as separators. Leading separators to
+    /// the left of the caret are removed along with the word.
+    pub fn delete_word_left(&mut self) {
+        if self.cursor_pos == 0 {
+            return;
+        }
+        let chars: Vec<char> = self.input.chars().collect();
+        let mut i = self.cursor_pos.min(chars.len());
+
+        while i > 0 && !Self::is_word_char(chars[i - 1]) {
+            i -= 1;
+        }
+        while i > 0 && Self::is_word_char(chars[i - 1]) {
+            i -= 1;
+        }
+
+        if i != self.cursor_pos {
+            let start = self.char_index_to_byte_index(i);
+            let end = self.char_index_to_byte_index(self.cursor_pos);
+            self.input.replace_range(start..end, "");
+            self.cursor_pos = i;
+            self.reset_cursor_blink();
+        }
+    }
+
+    /// Deletes the character at the cursor position.
+    ///
+    /// This is the standard Delete behavior: it removes the character under
+    /// the caret (to the right), leaving the cursor position unchanged.
+    pub fn delete_forward(&mut self) {
+        let len = self.input.chars().count();
+        if self.cursor_pos >= len {
+            return;
+        }
+        let byte_idx = self.char_index_to_byte_index(self.cursor_pos);
+        self.input.remove(byte_idx);
+        self.reset_cursor_blink();
+    }
+
+    /// Deletes the word immediately after the cursor.
+    ///
+    /// Word boundaries use `is_word_char` rules, treating non-alphanumeric
+    /// characters (except underscore) as separators. Leading separators to
+    /// the right of the caret are removed along with the word.
+    pub fn delete_word_right(&mut self) {
+        let chars: Vec<char> = self.input.chars().collect();
+        let len = chars.len();
+        if self.cursor_pos >= len {
+            return;
+        }
+        let mut i = self.cursor_pos.min(len);
+
+        while i < len && !Self::is_word_char(chars[i]) {
+            i += 1;
+        }
+        while i < len && Self::is_word_char(chars[i]) {
+            i += 1;
+        }
+
+        if i != self.cursor_pos {
+            let start = self.char_index_to_byte_index(self.cursor_pos);
+            let end = self.char_index_to_byte_index(i);
+            self.input.replace_range(start..end, "");
+            self.reset_cursor_blink();
+        }
+    }
+
+    /// Moves the cursor one character to the left.
+    ///
+    /// No-op if already at the beginning of the input. Resets the blink
+    /// timer to keep the caret visible after navigation.
+    pub fn move_cursor_left(&mut self) {
+        if self.cursor_pos > 0 {
+            self.cursor_pos -= 1;
+            self.reset_cursor_blink();
+        }
+    }
+
+    /// Moves the cursor one character to the right.
+    ///
+    /// No-op if already at the end of the input. Resets the blink timer to
+    /// keep the caret visible after navigation.
+    pub fn move_cursor_right(&mut self) {
+        let len = self.input.chars().count();
+        if self.cursor_pos < len {
+            self.cursor_pos += 1;
+            self.reset_cursor_blink();
+        }
+    }
+
+    /// Moves the cursor to the start of the input.
+    ///
+    /// This is the Home key behavior. Resets the blink timer if the cursor
+    /// position changes.
+    pub fn move_cursor_home(&mut self) {
+        if self.cursor_pos != 0 {
+            self.cursor_pos = 0;
+            self.reset_cursor_blink();
+        }
+    }
+
+    /// Moves the cursor to the end of the input.
+    ///
+    /// This is the End key behavior. Resets the blink timer if the cursor
+    /// position changes.
+    pub fn move_cursor_end(&mut self) {
+        let len = self.input.chars().count();
+        if self.cursor_pos != len {
+            self.cursor_pos = len;
+            self.reset_cursor_blink();
+        }
+    }
+
+    /// Moves the cursor one word to the left.
+    ///
+    /// Word boundaries use `is_word_char` rules, treating non-alphanumeric
+    /// characters (except underscore) as separators. Leading separators to
+    /// the left are skipped before landing on the previous word boundary.
+    pub fn move_cursor_word_left(&mut self) {
+        if self.cursor_pos == 0 {
+            return;
+        }
+        let chars: Vec<char> = self.input.chars().collect();
+        let mut i = self.cursor_pos.min(chars.len());
+
+        while i > 0 && !Self::is_word_char(chars[i - 1]) {
+            i -= 1;
+        }
+        while i > 0 && Self::is_word_char(chars[i - 1]) {
+            i -= 1;
+        }
+
+        if i != self.cursor_pos {
+            self.cursor_pos = i;
+            self.reset_cursor_blink();
+        }
+    }
+
+    /// Moves the cursor one word to the right.
+    ///
+    /// Word boundaries use `is_word_char` rules, treating non-alphanumeric
+    /// characters (except underscore) as separators. Leading separators to
+    /// the right are skipped before landing on the next word boundary.
+    pub fn move_cursor_word_right(&mut self) {
+        let chars: Vec<char> = self.input.chars().collect();
+        let len = chars.len();
+        let mut i = self.cursor_pos.min(len);
+
+        while i < len && !Self::is_word_char(chars[i]) {
+            i += 1;
+        }
+        while i < len && Self::is_word_char(chars[i]) {
+            i += 1;
+        }
+
+        if i != self.cursor_pos {
+            self.cursor_pos = i;
+            self.reset_cursor_blink();
+        }
+    }
+
+    /// Toggles cursor blink state when enough time has elapsed.
+    ///
+    /// Returns `true` when a toggle occurs so the caller can trigger a
+    /// redraw; otherwise returns `false` to avoid unnecessary updates.
+    pub fn update_cursor_blink(&mut self) -> bool {
+        if self.last_cursor_blink.elapsed().as_millis() >= 500 {
+            self.cursor_visible = !self.cursor_visible;
+            self.last_cursor_blink = Instant::now();
+            return true;
+        }
+        false
+    }
+
+    fn reset_cursor_blink(&mut self) {
+        self.cursor_visible = true;
+        self.last_cursor_blink = Instant::now();
+    }
+
+    fn clamp_cursor(&mut self) {
+        let len = self.input.chars().count();
+        if self.cursor_pos > len {
+            self.cursor_pos = len;
+        }
+    }
+
+    fn char_index_to_byte_index(&self, char_index: usize) -> usize {
+        self.input
+            .char_indices()
+            .nth(char_index)
+            .map(|(idx, _)| idx)
+            .unwrap_or_else(|| self.input.len())
+    }
+
+    fn is_word_char(c: char) -> bool {
+        c.is_alphanumeric() || c == '_'
     }
 
     /// Switches to the next model in the list (Down arrow key behavior).
@@ -342,6 +600,7 @@ impl App {
 
             self.history.push_str(&format!("\nYOU: {}\n\nAI: ", prompt));
             self.input.clear();
+            self.cursor_pos = 0;
             
             // Speichere die aktualisierten Buffer für das aktuelle Modell
             self.save_current_model_buffers();
