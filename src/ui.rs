@@ -42,7 +42,7 @@ use ratatui::{
     layout::{Alignment, Constraint, Direction, Layout},
     style::{Color, Modifier, Style},
     text::{Line, Span, Text},
-    widgets::{Block, Borders, List, ListItem, Paragraph, Wrap},
+    widgets::{Block, Borders, Clear, List, ListItem, Paragraph, Wrap},
     Frame,
 };
 use regex::Regex;
@@ -190,6 +190,7 @@ pub fn ui(f: &mut Frame, app: &mut App) {
     } else {
         " [MANUAL SCROLL 🔒] "
     };
+    f.render_widget(Clear, chat_chunks[0]);
     f.render_widget(
         Paragraph::new(history_text)
             .block(

@@ -72,6 +72,10 @@ This project is licensed under the **GPL-2.0-or-later**. See the [LICENSE](LICEN
 
 ## 📝 Changelog
 
+### v0.3.0 - February 2026
+
+* **🧹 Clean Chat Redraw**: Clears the chat area before rendering to prevent leftover characters when scrolling
+
 ### v0.2.0 - February 2026
 
 * **🎯 Per-Model Buffer Management**: Each LLM now maintains separate input buffers, chat histories, and scroll positions
