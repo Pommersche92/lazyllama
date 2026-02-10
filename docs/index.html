@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="auto">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🦙 LazyLlama - Lightweight TUI Client for Ollama</title>
+    <meta name="description" content="LazyLlama is a fast, lightweight Terminal User Interface (TUI) client for Ollama with real-time streaming, markdown support, and smart scrolling.">
+    <meta name="keywords" content="ollama, tui, ai, llama, terminal, rust, cli">
+    <meta name="author" content="Raimo Geisel">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://pommersche92.github.io/lazyllama/">
+    <meta property="og:title" content="🦙 LazyLlama - Lightweight TUI Client for Ollama">
+    <meta property="og:description" content="LazyLlama is a fast, lightweight Terminal User Interface (TUI) client for Ollama with real-time streaming, markdown support, and smart scrolling.">
+    <meta property="og:image" content="https://pommersche92.github.io/lazyllama/images/preview.png">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://pommersche92.github.io/lazyllama/">
+    <meta property="twitter:title" content="🦙 LazyLlama - Lightweight TUI Client for Ollama">
+    <meta property="twitter:description" content="LazyLlama is a fast, lightweight Terminal User Interface (TUI) client for Ollama with real-time streaming, markdown support, and smart scrolling.">
+    <meta property="twitter:image" content="https://pommersche92.github.io/lazyllama/images/preview.png">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🦙</text></svg>">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar" role="navigation">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <span class="nav-logo">🦙</span>
+                <span class="nav-title">LazyLlama</span>
+            </div>
+            <div class="nav-links">
+                <a href="#features" class="nav-link">Features</a>
+                <a href="#installation" class="nav-link">Installation</a>
+                <a href="#links" class="nav-link">Links</a>
+                <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme" title="Toggle light/dark theme">
+                    <span class="theme-icon">🌙</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="hero">
+        <div class="hero-container">
+            <div class="hero-content">
+                <div class="hero-badge">
+                    <span class="badge-icon">⚡</span>
+                    <span>Fast • Lightweight • Terminal</span>
+                </div>
+                <h1 class="hero-title">
+                    🦙 <span class="gradient-text">LazyLlama</span>
+                </h1>
+                <p class="hero-subtitle">
+                    A blazing fast Terminal User Interface (TUI) client for 
+                    <a href="https://ollama.com/" target="_blank" rel="noopener">Ollama</a>
+                    with real-time streaming, markdown support, and smart scrolling.
+                </p>
+                <div class="hero-actions">
+                    <a href="https://github.com/Pommersche92/lazyllama" target="_blank" rel="noopener" class="btn btn-primary">
+                        <span class="btn-icon">📦</span>
+                        View on GitHub
+                    </a>
+                    <a href="https://crates.io/crates/lazyllama" target="_blank" rel="noopener" class="btn btn-secondary">
+                        <span class="btn-icon">🦀</span>
+                        Get from Crates.io
+                    </a>
+                </div>
+                <div class="version-info">
+                    <span class="version-badge">v0.3.0</span>
+                    <span class="separator">•</span>
+                    <span class="license">GPL-2.0-or-later</span>
+                </div>
+            </div>
+            <div class="hero-visual">
+                <div class="terminal-preview">
+                    <div class="terminal-header">
+                        <div class="terminal-dots">
+                            <span class="dot dot-red"></span>
+                            <span class="dot dot-yellow"></span>
+                            <span class="dot dot-green"></span>
+                        </div>
+                        <div class="terminal-title">lazyllama</div>
+                    </div>
+                    <div class="terminal-content">
+                        <div class="terminal-line">
+                            <span class="prompt">$</span>
+                            <span class="command">lazyllama</span>
+                        </div>
+                        <div class="terminal-line">
+                            <span class="output">🦙 LazyLlama v0.3.0 - Starting...</span>
+                        </div>
+                        <div class="terminal-line">
+                            <span class="output">📡 Connected to Ollama</span>
+                        </div>
+                        <div class="terminal-line">
+                            <span class="output">🤖 Available models:</span>
+                        </div>
+                        <div class="terminal-line">
+                            <span class="output">   • llama2</span>
+                        </div>
+                        <div class="terminal-line">
+                            <span class="output">   • mistral</span>
+                        </div>
+                        <div class="terminal-line">
+                            <span class="output">   • codellama</span>
+                        </div>
+                        <div class="terminal-line">
+                            <span class="prompt-user">></span>
+                            <span class="cursor">_</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Features Section -->
+    <section id="features" class="features">
+        <div class="container">
+            <div class="section-header">
+                <h2>✨ Why LazyLlama?</h2>
+                <p>Built with performance and user experience in mind</p>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">⚡</div>
+                    <h3>Real-time Streaming</h3>
+                    <p>Responses are generated live, providing immediate feedback without waiting for complete generation.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🎨</div>
+                    <h3>Markdown Support</h3>
+                    <p>Automatic formatting for headers, lists, bold text, and syntax-highlighted code blocks with custom borders.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🖱️</div>
+                    <h3>Smart Scrolling</h3>
+                    <p>Automatic following of AI output with manual scroll lock (🔒) for reading previous messages undisturbed.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔄</div>
+                    <h3>Model Management</h3>
+                    <p>Easily switch between installed Ollama models using arrow keys with separate input/output buffers per model.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">💾</div>
+                    <h3>Smart Buffer Management</h3>
+                    <p>Each LLM maintains its own chat history, input text, and scroll position for seamless multi-model workflows.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📝</div>
+                    <h3>Automatic Logging</h3>
+                    <p>Every chat session is automatically saved as text files with both combined and per-model histories.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">⚙️</div>
+                    <h3>Emacs-inspired Controls</h3>
+                    <p>Familiar keyboard shortcuts for efficient navigation and control, designed for power users.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🦀</div>
+                    <h3>Built with Rust</h3>
+                    <p>Ultra-low latency and minimal resource footprint using Rust and the Ratatui terminal framework.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Installation Section -->
+    <section id="installation" class="installation">
+        <div class="container">
+            <div class="section-header">
+                <h2>🚀 Quick Start</h2>
+                <p>Get up and running in minutes</p>
+            </div>
+            <div class="installation-content">
+                <div class="installation-step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h3>Prerequisites</h3>
+                        <p>Make sure you have <a href="https://rustup.rs/" target="_blank" rel="noopener">Rust</a> and <a href="https://ollama.com/" target="_blank" rel="noopener">Ollama</a> installed and running.</p>
+                    </div>
+                </div>
+                <div class="installation-step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h3>Install LazyLlama</h3>
+                        <div class="code-block">
+                            <pre><code># From crates.io (recommended)
+cargo install lazyllama
+
+# Or build from source
+git clone https://github.com/Pommersche92/lazyllama.git
+cd lazyllama
+cargo install --path .</code></pre>
+                        </div>
+                    </div>
+                </div>
+                <div class="installation-step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h3>Run LazyLlama</h3>
+                        <div class="code-block">
+                            <pre><code>lazyllama</code></pre>
+                        </div>
+                        <p>That's it! Start chatting with your AI models right in your terminal.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Controls Section -->
+    <section class="controls">
+        <div class="container">
+            <div class="section-header">
+                <h2>⌨️ Keyboard Controls</h2>
+                <p>Designed for efficiency and productivity</p>
+            </div>
+            <div class="controls-grid">
+                <div class="control-group">
+                    <h3>Basic Controls</h3>
+                    <div class="control-item">
+                        <kbd>Enter</kbd>
+                        <span>Send message / Re-activate Autoscroll</span>
+                    </div>
+                    <div class="control-item">
+                        <kbd>Ctrl+Q</kbd>
+                        <span>Quit application safely</span>
+                    </div>
+                    <div class="control-item">
+                        <kbd>Ctrl+C</kbd>
+                        <span>Clear chat history</span>
+                    </div>
+                    <div class="control-item">
+                        <kbd>Ctrl+S</kbd>
+                        <span>Manually toggle Autoscroll</span>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <h3>Navigation</h3>
+                    <div class="control-item">
+                        <kbd>↑</kbd> <kbd>↓</kbd>
+                        <span>Switch between AI Models</span>
+                    </div>
+                    <div class="control-item">
+                        <kbd>PgUp</kbd> <kbd>PgDn</kbd>
+                        <span>Scroll history (activates Manual Mode)</span>
+                    </div>
+                    <div class="control-item">
+                        <kbd>←</kbd> <kbd>→</kbd>
+                        <span>Move cursor left/right in input field</span>
+                    </div>
+                    <div class="control-item">
+                        <kbd>Home</kbd> <kbd>End</kbd>
+                        <span>Jump to start/end of input line</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Links Section -->
+    <section id="links" class="links">
+        <div class="container">
+            <div class="section-header">
+                <h2>🔗 Resources & Links</h2>
+                <p>Everything you need to get the most out of LazyLlama</p>
+            </div>
+            <div class="links-grid">
+                <a href="https://github.com/Pommersche92/lazyllama" target="_blank" rel="noopener" class="link-card">
+                    <div class="link-icon">📦</div>
+                    <h3>GitHub Repository</h3>
+                    <p>Source code, issues, and contributions</p>
+                    <span class="link-arrow">→</span>
+                </a>
+                <a href="https://crates.io/crates/lazyllama" target="_blank" rel="noopener" class="link-card">
+                    <div class="link-icon">🦀</div>
+                    <h3>Crates.io Package</h3>
+                    <p>Official Rust package registry</p>
+                    <span class="link-arrow">→</span>
+                </a>
+                <a href="https://docs.rs/lazyllama" target="_blank" rel="noopener" class="link-card">
+                    <div class="link-icon">📚</div>
+                    <h3>API Documentation</h3>
+                    <p>Generated code documentation</p>
+                    <span class="link-arrow">→</span>
+                </a>
+                <a href="https://geisel-web.de/" target="_blank" rel="noopener" class="link-card">
+                    <div class="link-icon">🌐</div>
+                    <h3>Developer Website</h3>
+                    <p>Raimo Geisel's personal website</p>
+                    <span class="link-arrow">→</span>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-left">
+                    <div class="footer-brand">
+                        <span class="footer-logo">🦙</span>
+                        <span class="footer-title">LazyLlama</span>
+                    </div>
+                    <p class="footer-desc">A lightweight TUI client for Ollama with markdown support and smart scrolling.</p>
+                </div>
+                <div class="footer-links">
+                    <div class="footer-column">
+                        <h4>Project</h4>
+                        <ul>
+                            <li><a href="https://github.com/Pommersche92/lazyllama" target="_blank" rel="noopener">GitHub</a></li>
+                            <li><a href="https://crates.io/crates/lazyllama" target="_blank" rel="noopener">Crates.io</a></li>
+                            <li><a href="https://docs.rs/lazyllama" target="_blank" rel="noopener">Documentation</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-column">
+                        <h4>Resources</h4>
+                        <ul>
+                            <li><a href="https://ollama.com/" target="_blank" rel="noopener">Ollama</a></li>
+                            <li><a href="https://rustup.rs/" target="_blank" rel="noopener">Rust Installation</a></li>
+                            <li><a href="https://geisel-web.de/" target="_blank" rel="noopener">Developer</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 Raimo Geisel. Licensed under GPL-2.0-or-later.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script src="js/theme.js"></script>
+</body>
+</html>

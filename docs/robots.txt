@@ -1,0 +1,25 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://pommersche92.github.io/lazyllama/sitemap.xml
+
+# Specific rules for search engine crawlers
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+# Disallow any admin or temporary directories if they exist
+Disallow: /admin/
+Disallow: /tmp/
+Disallow: /.git/
+
+# Allow all CSS, JS, and image files
+Allow: /css/
+Allow: /js/
+Allow: /images/
+
+# Crawl delay (optional - only if needed)
+# Crawl-delay: 1
