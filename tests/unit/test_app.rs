@@ -1,8 +1,23 @@
 //! Unit tests for the App module (src/app.rs)
 //! 
-//! Diese Tests prüfen die Kernfunktionalität der App-Struktur,
-//! einschließlich Text-Eingabe, Cursor-Navigation, Model-Management
-//! und Buffer-Verwaltung.
+//! These tests verify the core functionality of the App structure,
+//! including text input, cursor navigation, model management,
+//! and buffer administration.
+//!
+//! ## Test Coverage
+//!
+//! - **Text Input Operations**: Character insertion, deletion, cursor movement
+//! - **Unicode Handling**: Proper handling of multi-byte characters
+//! - **Model Management**: Model switching, buffer isolation, state persistence
+//! - **Cursor Navigation**: Word-wise movement, boundary detection, position tracking
+//! - **Input Validation**: Edge case handling, boundary conditions
+//!
+//! ## Test Strategy
+//!
+//! - Uses mock App instances to avoid external dependencies
+//! - Tests individual operations in isolation
+//! - Validates state consistency after operations
+//! - Ensures proper handling of edge cases and boundary conditions
 
 use std::collections::HashMap;
 use std::time::{Duration, Instant};
@@ -11,7 +26,28 @@ use ollama_rs::Ollama;
 use lazyllama::app::App;
 
 
-/// Erstellt eine Test-App-Instanz ohne Ollama-API-Aufrufe
+/// Creates a test App instance without Ollama API calls
+/// 
+/// This helper function creates a minimal App instance suitable for unit testing
+/// without requiring external dependencies or network access.
+/// 
+/// # Returns
+/// 
+/// A fully initialized App instance with:
+/// - Two test models in the model list
+/// - Default selected model (index 0)
+/// - Empty input and history buffers
+/// - Default cursor and scroll positions
+/// - Mock Ollama client (no network calls)
+/// - Current timestamp for timing-sensitive operations
+/// 
+/// # Usage
+/// 
+/// ```ignore
+/// let mut app = create_test_app();
+/// app.insert_char('H');
+/// assert_eq!(app.input, "H");
+/// ```
 fn create_test_app() -> App {
     App {
         models: vec!["test_model_1".to_string(), "test_model_2".to_string()],
@@ -40,6 +76,25 @@ fn create_test_app() -> App {
     }
 }
 
+/// Tests character insertion functionality in the input buffer.
+/// 
+/// Validates that:
+/// - ASCII characters are inserted correctly at cursor position
+/// - Unicode characters (emojis, accented letters) are handled properly
+/// - Cursor position is updated correctly after insertion
+/// - String length and content integrity are maintained
+/// 
+/// # Test Cases
+/// 
+/// - Sequential ASCII character insertion
+/// - Unicode character insertion (ö, emoji)
+/// - Cursor position tracking after each insertion
+/// 
+/// # Expected Behavior
+/// 
+/// - Characters should appear at the correct position in the string
+/// - Cursor should advance by one position per character
+/// - Unicode characters should be treated as single units
 #[test]
 fn test_insert_char() {
     let mut app = create_test_app();
@@ -58,6 +113,25 @@ fn test_insert_char() {
     assert_eq!(app.cursor_pos, 3);
 }
 
+/// Tests backspace functionality for text deletion.
+/// 
+/// Validates that:
+/// - Characters are removed correctly from the cursor position
+/// - Cursor position is updated appropriately after deletion
+/// - Boundary conditions are handled (beginning of string)
+/// - String integrity is maintained after deletion
+/// 
+/// # Test Cases
+/// 
+/// - Normal backspace operation in middle of text
+/// - Backspace at the beginning of text (should be no-op)
+/// - Cursor position updates after deletion
+/// 
+/// # Expected Behavior
+/// 
+/// - Character before cursor should be removed
+/// - Cursor should move back by one position
+/// - No operation should occur when cursor is at position 0
 #[test]
 fn test_backspace() {
     let mut app = create_test_app();
@@ -75,6 +149,25 @@ fn test_backspace() {
     assert_eq!(app.cursor_pos, 0);
 }
 
+/// Tests forward delete functionality.
+/// 
+/// Validates that:
+/// - Character at cursor position is deleted correctly
+/// - Cursor position remains unchanged after deletion
+/// - Boundary conditions are handled (end of string)
+/// - String content and length are updated properly
+/// 
+/// # Test Cases
+/// 
+/// - Forward deletion in middle of text
+/// - Forward deletion at end of text (should be no-op)
+/// - Cursor position stability during deletion
+/// 
+/// # Expected Behavior
+/// 
+/// - Character at cursor position should be removed
+/// - Cursor position should remain the same
+/// - No operation should occur when cursor is at end of string
 #[test]
 fn test_delete_forward() {
     let mut app = create_test_app();
@@ -92,6 +185,25 @@ fn test_delete_forward() {
     assert_eq!(app.cursor_pos, 4);
 }
 
+/// Tests leftward cursor movement functionality.
+/// 
+/// Validates that:
+/// - Cursor moves correctly to the left
+/// - Boundary conditions are respected (beginning of text)
+/// - Character positions are calculated accurately
+/// - Unicode characters are handled as single units
+/// 
+/// # Test Cases
+/// 
+/// - Normal leftward movement in middle of text
+/// - Movement at beginning of text (should be no-op)
+/// - Position tracking and boundary detection
+/// 
+/// # Expected Behavior
+/// 
+/// - Cursor should move one position to the left
+/// - Movement should stop at position 0
+/// - Text content should remain unchanged
 #[test]
 fn test_move_cursor_left() {
     let mut app = create_test_app();

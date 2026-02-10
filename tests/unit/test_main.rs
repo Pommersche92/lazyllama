@@ -1,7 +1,49 @@
+//! Unit tests for the main application entry point and event handling.
+//!
+//! These tests verify keyboard event processing, key combination detection,
+//! and input validation for the Terminal UI event loop.
+//!
+//! ## Test Coverage
+//!
+//! - **Key Event Creation**: Helper functions for generating test events
+//! - **Keyboard Combinations**: Ctrl+Key combinations and modifier detection
+//! - **Special Keys**: Arrow keys, Page Up/Down, Enter, Backspace
+//! - **Character Input**: Normal character input without modifiers
+//! - **Navigation Keys**: Home, End, Left, Right arrow keys
+//!
+//! ## Test Strategy
+//!
+//! - Uses crossterm KeyEvent structures for realistic event simulation
+//! - Tests both individual keys and key combinations
+//! - Validates modifier key detection and handling
+//! - Ensures consistent event structure across different input types
+
 use std::time::Duration;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers, KeyEventKind};
 
-/// Helper zum Erstellen von KeyEvent-Strukturen für Tests
+/// Helper function for creating KeyEvent structures for testing.
+/// 
+/// Creates a standardized KeyEvent with the specified key code and modifiers.
+/// Useful for generating consistent test input across different test scenarios.
+/// 
+/// # Arguments
+/// 
+/// * `code` - The key code (character, special key, etc.)
+/// * `modifiers` - Key modifiers (Ctrl, Alt, Shift combinations)
+/// 
+/// # Returns
+/// 
+/// A KeyEvent structure with:
+/// - Specified key code and modifiers
+/// - KeyEventKind::Press (simulates key press)
+/// - Empty key state (no additional flags)
+/// 
+/// # Example
+/// 
+/// ```ignore
+/// let ctrl_q = create_key_event(KeyCode::Char('q'), KeyModifiers::CONTROL);
+/// assert!(ctrl_q.modifiers.contains(KeyModifiers::CONTROL));
+/// ```
 fn create_key_event(code: KeyCode, modifiers: KeyModifiers) -> KeyEvent {
     KeyEvent {
         code,
@@ -11,9 +53,27 @@ fn create_key_event(code: KeyCode, modifiers: KeyModifiers) -> KeyEvent {
     }
 }
 
+/// Tests recognition of various key combinations including Control modifier.
+/// 
+/// This test validates that the application correctly identifies and processes
+/// different key combinations that are used for application control and shortcuts.
+/// 
+/// # Test Coverage
+/// 
+/// - Ctrl+Q combination (quit application)
+/// - Ctrl+C combination (clear history)
+/// - Normal character input without modifiers
+/// - Modifier key detection and validation
+/// 
+/// # Expected Behavior
+/// 
+/// - Control modifier should be correctly detected
+/// - Key codes should be preserved with modifiers
+/// - Normal keys should not have modifier flags set
+/// - Event structure should be consistent
 #[test]
 fn test_key_combinations() {
-    // Test dass verschiedene Key-Kombinationen korrekt erkannt werden
+    // Test that various key combinations are correctly recognized
     let ctrl_q = create_key_event(KeyCode::Char('q'), KeyModifiers::CONTROL);
     assert_eq!(ctrl_q.code, KeyCode::Char('q'));
     assert!(ctrl_q.modifiers.contains(KeyModifiers::CONTROL));
@@ -27,9 +87,27 @@ fn test_key_combinations() {
     assert!(!normal_char.modifiers.contains(KeyModifiers::CONTROL));
 }
 
+/// Tests recognition and handling of special navigation and control keys.
+/// 
+/// This test validates that the application correctly processes special keys
+/// used for navigation, text editing, and UI control within the terminal interface.
+/// 
+/// # Test Coverage
+/// 
+/// - Enter key (send message, confirm input)
+/// - Backspace key (delete character)
+/// - Arrow keys (Up/Down for model selection)
+/// - Page Up/Down keys (manual scrolling)
+/// 
+/// # Expected Behavior
+/// 
+/// - Each special key should be correctly identified
+/// - Key codes should match expected values
+/// - No modifiers should be present for basic special keys
+/// - Event kind should be Press for all keys
 #[test]
 fn test_special_keys() {
-    // Test spezielle Tasten
+    // Test special keys
     let enter = create_key_event(KeyCode::Enter, KeyModifiers::empty());
     assert_eq!(enter.code, KeyCode::Enter);
 
@@ -49,9 +127,27 @@ fn test_special_keys() {
     assert_eq!(page_down.code, KeyCode::PageDown);
 }
 
+/// Tests extended Control key combinations for advanced text editing.
+/// 
+/// This test validates that the application correctly processes Control modifier
+/// combinations with various keys used for advanced text navigation and editing.
+/// 
+/// # Test Coverage
+/// 
+/// - Ctrl+Left Arrow (word-wise cursor movement)
+/// - Ctrl+Right Arrow (word-wise cursor movement)
+/// - Ctrl+Backspace (delete word backward)
+/// - Ctrl+Delete (delete word forward)
+/// 
+/// # Expected Behavior
+/// 
+/// - Control modifier should be properly detected with directional keys
+/// - Key codes should be preserved when combined with modifiers
+/// - All combinations should register as key press events
+/// - Event structure should remain consistent
 #[test]
 fn test_ctrl_combinations() {
-    // Test erweiterte Ctrl-Kombinationen
+    // Test extended Ctrl combinations
     let ctrl_left = create_key_event(KeyCode::Left, KeyModifiers::CONTROL);
     assert_eq!(ctrl_left.code, KeyCode::Left);
     assert!(ctrl_left.modifiers.contains(KeyModifiers::CONTROL));
@@ -69,6 +165,24 @@ fn test_ctrl_combinations() {
     assert!(ctrl_delete.modifiers.contains(KeyModifiers::CONTROL));
 }
 
+/// Tests basic navigation keys for cursor and text movement.
+/// 
+/// This test validates that the application correctly processes navigation
+/// keys used for cursor positioning and text navigation within the input field.
+/// 
+/// # Test Coverage
+/// 
+/// - Home key (move to beginning of line)
+/// - End key (move to end of line)
+/// - Left Arrow (move cursor left)
+/// - Right Arrow (move cursor right)
+/// 
+/// # Expected Behavior
+/// 
+/// - Each navigation key should be correctly identified
+/// - Key codes should match expected navigation key values
+/// - No modifiers should be present for basic navigation
+/// - All keys should register as press events
 #[test]
 fn test_navigation_keys() {
     // Test Home/End Navigation
@@ -85,9 +199,29 @@ fn test_navigation_keys() {
     assert_eq!(right.code, KeyCode::Right);
 }
 
+/// Tests character input validation for various text input scenarios.
+/// 
+/// This test validates that the application correctly processes different
+/// types of character input including letters, numbers, and symbols used
+/// in typical chat conversations.
+/// 
+/// # Test Coverage
+/// 
+/// - Lowercase letters (a)
+/// - Uppercase letters (Z)
+/// - Numeric digits (5)
+/// - Space character
+/// - Symbol characters
+/// 
+/// # Expected Behavior
+/// 
+/// - All character types should be correctly processed
+/// - Character codes should match input values exactly
+/// - No modifiers should be present for normal character input
+/// - Event structure should be consistent across character types
 #[test]
 fn test_character_input() {
-    // Test verschiedene Zeichen-Eingaben
+    // Test various character inputs
     let char_a = create_key_event(KeyCode::Char('a'), KeyModifiers::empty());
     assert_eq!(char_a.code, KeyCode::Char('a'));
 

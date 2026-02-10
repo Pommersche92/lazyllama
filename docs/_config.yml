@@ -1,0 +1,76 @@
+# GitHub Pages Configuration for LazyLlama
+
+# Site settings
+title: "LazyLlama - Lightweight TUI Client for Ollama"
+description: "A fast, lightweight Terminal User Interface (TUI) client for Ollama with real-time streaming, markdown support, and smart scrolling."
+url: "https://pommersche92.github.io"
+baseurl: "/lazyllama"
+
+# Author information
+author:
+  name: "Raimo Geisel"
+  email: "raimo@geisel-web.de"
+  url: "https://geisel-web.de"
+
+# Repository information
+repository: "Pommersche92/lazyllama"
+github_username: "Pommersche92"
+
+# Build settings
+markdown: kramdown
+highlighter: rouge
+permalink: /:categories/:title/
+
+# GitHub Pages specific settings
+domain: pommersche92.github.io
+source: docs
+
+# Exclude files from processing
+exclude:
+  - README.md
+  - LICENSE
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
+  - vendor
+  - .sass-cache
+  - .jekyll-cache
+  - .jekyll-metadata
+
+# Include files that would normally be excluded
+include:
+  - _pages
+
+# Plugin configuration
+plugins:
+  - jekyll-sitemap
+  - jekyll-feed
+  - jekyll-seo-tag
+
+# SEO settings
+lang: en_US
+logo: /assets/images/logo.png
+social:
+  type: Person
+  links:
+    - "https://github.com/Pommersche92"
+    - "https://geisel-web.de"
+
+# Collections
+collections:
+  docs:
+    output: true
+    permalink: /:collection/:name/
+
+# Default values
+defaults:
+  - scope:
+      path: ""
+      type: "pages"
+    values:
+      layout: "default"
+  - scope:
+      path: ""
+      type: "docs"
+    values:
+      layout: "doc"
