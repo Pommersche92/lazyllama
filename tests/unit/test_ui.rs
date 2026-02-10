@@ -1,8 +1,23 @@
 //! Unit tests for the UI module (src/ui.rs)
 //! 
-//! Diese Tests prüfen die Terminal User Interface Funktionalität,
-//! einschließlich Text-Parsing, History-Rendering, Markdown-Verarbeitung
-//! und Syntax-Highlighting.
+//! These tests verify the Terminal User Interface functionality,
+//! including text parsing, history rendering, markdown processing,
+//! and syntax highlighting.
+//!
+//! ## Test Coverage
+//!
+//! - **Conversation Parsing**: USER/AI label detection and formatting
+//! - **Code Block Processing**: Markdown code block extraction and highlighting
+//! - **Syntax Highlighting**: Language-specific code formatting
+//! - **Text Styling**: Color application and text decoration
+//! - **Edge Case Handling**: Malformed markdown, nested blocks, mixed content
+//!
+//! ## Test Strategy
+//!
+//! - Uses real UI parsing functions with mock data
+//! - Validates output structure and formatting
+//! - Tests visual consistency and readability
+//! - Ensures robust handling of complex input scenarios
 
 use ratatui::{
     style::{Color, Modifier, Style},
@@ -17,7 +32,7 @@ fn test_parse_history_simple_conversation() {
     
     assert!(parsed.lines.len() >= 2);
     
-    // Prüfe dass USER/AI Labels korrekt geparst werden
+    // Verify that USER/AI labels are parsed correctly
     let first_line = &parsed.lines[0];
     assert_eq!(first_line.spans.len(), 2); // "YOU:" + rest
     assert_eq!(first_line.spans[0].content, "YOU:");
@@ -29,15 +44,42 @@ fn test_parse_history_simple_conversation() {
     assert_eq!(second_line.spans[1].content, " Hi there!");
 }
 
+/// Tests conversation parsing with embedded code blocks.
+/// 
+/// This test validates the complex parsing logic for conversations that
+/// contain markdown-style code blocks with syntax highlighting. Tests
+/// the integration between conversation parsing and code block detection.
+/// 
+/// # Test Coverage
+/// 
+/// - Code block detection within conversations
+/// - Language-specific syntax highlighting (rust)
+/// - Code block frame rendering (borders, separators)
+/// - Text styling for code vs regular content
+/// - Multi-line code block handling
+/// 
+/// # Test Data
+/// 
+/// Conversation with embedded Rust code:
+/// - USER request for code example
+/// - AI response containing ```rust code block
+/// - Function definition with println! macro
+/// 
+/// # Expected Behavior
+/// 
+/// - Code blocks should be framed with decorative borders
+/// - Language identifier should be highlighted
+/// - Code content should have appropriate styling
+/// - Border characters should use consistent styling
 #[test]
 fn test_parse_history_with_code_block() {
     let history = "YOU: Show me code\nAI: Here's some code:\n\n```rust\nfn main() {\n    println!(\"Hello\");\n}\n```\n\nDone!";
     let parsed = parse_history(history);
     
-    // Sollte mehrere Zeilen haben inkl. Code-Block-Rahmen
+    // Should have multiple lines including code block frames
     assert!(parsed.lines.len() > 5);
     
-    // Finde die Code-Block-Header-Zeile
+    // Find the code block header line
     let header_line = parsed.lines.iter()
         .find(|line| line.spans.iter().any(|span| span.content.contains("┌── rust")))
         .expect("Should find code block header");
@@ -45,7 +87,7 @@ fn test_parse_history_with_code_block() {
     assert!(header_line.spans[0].content.contains("rust"));
     assert_eq!(header_line.spans[0].style.fg, Some(Color::Yellow));
     
-    // Finde Code-Zeilen (mit │ Präfix)
+    // Find code lines (with │ prefix)
     let code_lines: Vec<_> = parsed.lines.iter()
         .filter(|line| line.spans.iter().any(|span| span.content == " │ "))
         .collect();
@@ -56,7 +98,7 @@ fn test_parse_history_with_code_block() {
         assert_eq!(code_line.spans[0].style.fg, Some(Color::Yellow));
     }
     
-    // Finde Footer-Zeile
+    // Find footer line
     let footer_line = parsed.lines.iter()
         .find(|line| line.spans.iter().any(|span| span.content.contains("└──────────")))
         .expect("Should find code block footer");
@@ -65,6 +107,31 @@ fn test_parse_history_with_code_block() {
     assert_eq!(footer_line.spans[0].style.fg, Some(Color::Yellow));
 }
 
+/// Tests conversation parsing with multiple code blocks in sequence.
+/// 
+/// This test validates the parser's ability to handle conversations containing
+/// multiple code blocks with different programming languages. Tests that each
+/// code block is parsed independently with correct language detection.
+/// 
+/// # Test Coverage
+/// 
+/// - Multiple code block detection in single conversation
+/// - Language-specific highlighting for different languages
+/// - Code block separation and isolation
+/// - Header generation for each language type
+/// 
+/// # Test Data
+/// 
+/// Conversation with two code blocks:
+/// - Python code block with print statement
+/// - JavaScript code block with console.log
+/// 
+/// # Expected Behavior
+/// 
+/// - Each code block should have its own header with language name
+/// - Language detection should work for both python and javascript
+/// - Code blocks should be visually separated
+/// - Each block should have appropriate syntax highlighting
 #[test]
 fn test_parse_history_multiple_code_blocks() {
     let history = r#"USER: Show examples
@@ -84,7 +151,7 @@ That's it!"#;
     
     let parsed = parse_history(history);
     
-    // Sollte beide Code-Block-Header finden
+    // Should find both code block headers
     let python_header = parsed.lines.iter()
         .find(|line| line.spans.iter().any(|span| span.content.contains("python")));
     assert!(python_header.is_some());
