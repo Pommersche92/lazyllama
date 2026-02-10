@@ -22,3 +22,7 @@ anyhow = "1.0"
 regex = "1"
 chrono = "0.4"
 dirs = "5.0"
+
+[dev-dependencies]
+tempfile = "3.8"
+tokio-test = "0.4"

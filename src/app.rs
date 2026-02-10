@@ -454,19 +454,19 @@ impl App {
         false
     }
 
-    fn reset_cursor_blink(&mut self) {
+    pub fn reset_cursor_blink(&mut self) {
         self.cursor_visible = true;
         self.last_cursor_blink = Instant::now();
     }
 
-    fn clamp_cursor(&mut self) {
+    pub fn clamp_cursor(&mut self) {
         let len = self.input.chars().count();
         if self.cursor_pos > len {
             self.cursor_pos = len;
         }
     }
 
-    fn char_index_to_byte_index(&self, char_index: usize) -> usize {
+    pub fn char_index_to_byte_index(&self, char_index: usize) -> usize {
         self.input
             .char_indices()
             .nth(char_index)
@@ -474,7 +474,7 @@ impl App {
             .unwrap_or_else(|| self.input.len())
     }
 
-    fn is_word_char(c: char) -> bool {
+    pub fn is_word_char(c: char) -> bool {
         c.is_alphanumeric() || c == '_'
     }
 
@@ -499,6 +499,10 @@ impl App {
     /// - If no model selected: selects index 0
     /// - Handles empty model list gracefully
     pub fn select_next_model(&mut self) {
+        if self.models.is_empty() {
+            return;
+        }
+        
         self.save_current_model_buffers();
         let i = match self.list_state.selected() {
             Some(i) => {
@@ -535,6 +539,10 @@ impl App {
     /// - If no model selected: selects index 0
     /// - Handles empty model list gracefully
     pub fn select_previous_model(&mut self) {
+        if self.models.is_empty() {
+            return;
+        }
+        
         self.save_current_model_buffers();
         let i = match self.list_state.selected() {
             Some(i) => {
@@ -628,3 +636,5 @@ impl App {
         Ok(())
     }
 }
+
+

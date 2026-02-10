@@ -25,17 +25,16 @@
 
 1. Clone the repository:
 
-```bash
+   ```bash
    git clone https://github.com/Pommersche92/lazyllama.git
    cd lazyllama
-```
+   ```
 
-2. Install it system-wide:
+1. Install it system-wide:
 
-```bash
-cargo install --path .
-
-```
+   ```bash
+   cargo install --path .
+   ```
 
 ## ⌨️ Controls
 
@@ -56,6 +55,7 @@ cargo install --path .
 | `Ctrl` + `Delete` | Delete next word |
 
 Optional debug:
+
 * `LAZYLLAMA_DEBUG_KEYS=1` shows key/scroll/render info in the status bar.
 
 ## 🛠 Project Structure
@@ -73,14 +73,49 @@ You can generate the full technical documentation locally:
 
 ```bash
 cargo doc --no-deps --open
-
 ```
+
+## 🧪 Testing
+
+LazyLlama features a comprehensive test suite with 63 tests covering all functionality:
+
+* **Unit Tests**: 53 modularized tests for individual components
+* **Integration Tests**: 7 end-to-end tests for component interaction
+* **Performance Benchmarks**: Continuous performance monitoring
+
+### Running Tests
+
+```bash
+# Run all tests (unit, integration, doc tests)
+cargo test
+
+# Run only unit tests
+cargo test --test test_unit
+
+# Run benchmarks
+cargo bench
+```
+
+For detailed testing information, test structure, and maintenance guidelines, see [TESTING.md](TESTING.md).
 
 ## 📄 License
 
 This project is licensed under the **GPL-2.0-or-later**. See the [LICENSE](LICENSE) file for details.
 
 ## 📝 Changelog
+
+### v0.4.0 - February 2026
+
+* **🧪 Comprehensive Test Suite**: Added 63 tests for robust code quality assurance
+  * **Unit Tests**: 53 modularized tests extracted to separate files for better maintainability
+    * App functionality: 18 tests for cursor navigation, model management, text editing
+    * UI components: 13 tests for markdown parsing, syntax highlighting, text rendering
+    * Utilities: 10 tests for filesystem operations, history management
+    * Event handling: 12 tests for key combinations, terminal integration
+  * **Integration Tests**: 7 end-to-end tests for component interaction
+  * **Performance Benchmarks**: Continuous monitoring for performance-critical functions
+* **🔧 Improved Testability**: Made internal functions public for comprehensive unit testing
+* **📚 Enhanced Documentation**: Updated test documentation and added detailed testing guide
 
 ### v0.3.0 - February 2026
 

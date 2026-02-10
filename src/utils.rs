@@ -80,10 +80,14 @@ use std::fs;
 ///
 /// ```no_run
 /// use lazyllama::utils::save_history_to_file;
+/// use anyhow::Result;
 ///
-/// let conversation = "YOU: Hello\nAI: Hi there!\n";
-/// save_history_to_file(conversation)?;
-/// // Creates: ~/.local/share/lazyllama/chat_2026-02-06_14-30-45.txt
+/// fn main() -> Result<()> {
+///     let conversation = "YOU: Hello\nAI: Hi there!\n";
+///     save_history_to_file(conversation)?;
+///     // Creates: ~/.local/share/lazyllama/chat_2026-02-06_14-30-45.txt
+///     Ok(())
+/// }
 /// ```
 pub fn save_history_to_file(history: &str) -> Result<()> {
     if history.is_empty() {
@@ -141,15 +145,19 @@ pub fn save_history_to_file(history: &str) -> Result<()> {
 /// ```no_run
 /// use std::collections::HashMap;
 /// use lazyllama::utils::save_model_histories;
+/// use anyhow::Result;
 ///
-/// let mut histories = HashMap::new();
-/// histories.insert("llama2:7b".to_string(), "YOU: Test\nAI: Response".to_string());
-/// histories.insert("codellama:13b".to_string(), "YOU: Code?\nAI: ```rust\n...".to_string());
-/// 
-/// save_model_histories(&histories)?;
-/// // Creates:
-/// // ~/.local/share/lazyllama/llama2_7b_2026-02-06_14-30-45.txt
-/// // ~/.local/share/lazyllama/codellama_13b_2026-02-06_14-30-45.txt
+/// fn main() -> Result<()> {
+///     let mut histories = HashMap::new();
+///     histories.insert("llama2:7b".to_string(), "YOU: Test\nAI: Response".to_string());
+///     histories.insert("codellama:13b".to_string(), "YOU: Code?\nAI: ```rust\n...".to_string());
+///     
+///     save_model_histories(&histories)?;
+///     // Creates:
+///     // ~/.local/share/lazyllama/llama2_7b_2026-02-06_14-30-45.txt
+///     // ~/.local/share/lazyllama/codellama_13b_2026-02-06_14-30-45.txt
+///     Ok(())
+/// }
 /// ```
 ///
 /// # Platform Compatibility
@@ -175,3 +183,5 @@ pub fn save_model_histories(model_histories: &std::collections::HashMap<String, 
     }
     Ok(())
 }
+
+

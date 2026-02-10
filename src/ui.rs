@@ -322,7 +322,7 @@ pub fn ui(f: &mut Frame, app: &mut App) {
 /// Input: "YOU: Hello\n\nAI: Here's some code:\n\n```rust\nfn main() {}\n```"
 /// Output: Formatted Text with colored labels and bordered code block
 /// ```
-fn parse_history<'a>(history: &'a str) -> Text<'a> {
+pub fn parse_history<'a>(history: &'a str) -> Text<'a> {
     let code_block_re = Regex::new(r"(?s)```(?P<lang>\w+)?\n(?P<code>.*?)```").unwrap();
     let mut text = Text::default();
     let mut last_match_end = 0;
@@ -395,7 +395,7 @@ fn parse_history<'a>(history: &'a str) -> Text<'a> {
 ///
 /// Appends styled content directly to the provided `target` Text object,
 /// allowing for incremental building of complex formatted documents.
-fn process_styled_text<'a>(text: &'a str, target: &mut Text<'a>) {
+pub fn process_styled_text<'a>(text: &'a str, target: &mut Text<'a>) {
     for line in text.lines() {
         let trimmed = line.trim();
         let mut spans = Vec::new();
@@ -428,3 +428,5 @@ fn process_styled_text<'a>(text: &'a str, target: &mut Text<'a>) {
         target.push_line(Line::from(spans));
     }
 }
+
+
