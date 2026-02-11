@@ -106,6 +106,14 @@ This project is licensed under the **GPL-2.0-or-later**. See the [LICENSE](LICEN
 
 ### v0.4.0 - February 2026
 
+* **📦 Dependency Updates**: Updated all dependencies to their latest versions
+  * **ratatui**: 0.26 → 0.30.0 (TUI framework with improved frame API)
+  * **crossterm**: 0.27 → 0.29.0 (terminal manipulation library)
+  * **dirs**: 5.0 → 6.0.0 (platform-specific directory paths)
+  * **tokio-stream**: 0.1 → 0.1.18 (async stream utilities)
+  * **tempfile**: 3.8 → 3.25.0 (dev dependency for test file management)
+  * **tokio-test**: 0.4 → 0.4.5 (dev dependency for async testing)
+* **🔄 API Migration**: Updated code to use `frame.area()` instead of deprecated `frame.size()` method
 * **🧪 Comprehensive Test Suite**: Added 63 tests for robust code quality assurance
   * **Unit Tests**: 53 modularized tests extracted to separate files for better maintainability
     * App functionality: 18 tests for cursor navigation, model management, text editing

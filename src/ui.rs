@@ -118,7 +118,7 @@ pub fn ui(f: &mut Frame, app: &mut App) {
             Constraint::Min(0),
             Constraint::Length(1),
         ])
-        .split(f.size());
+        .split(f.area());
 
     f.render_widget(
         Paragraph::new(BANNER)

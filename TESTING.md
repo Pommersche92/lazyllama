@@ -118,8 +118,8 @@ The tests use the following dev dependencies:
 
 ```toml
 [dev-dependencies] 
-tempfile = "3.8"      # Temporary files for FS tests
-tokio-test = "0.4"    # Async test utilities
+tempfile = "3.25"     # Temporary files for FS tests
+tokio-test = "0.4.5"  # Async test utilities
 ```
 
 ## Continuous Testing
