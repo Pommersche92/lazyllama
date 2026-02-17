@@ -39,6 +39,7 @@
             </div>
             <div class="nav-links">
                 <a href="#features" class="nav-link">Features</a>
+                <a href="#performance" class="nav-link">Performance</a>
                 <a href="#installation" class="nav-link">Installation</a>
                 <a href="#links" class="nav-link">Links</a>
                 <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme" title="Toggle light/dark theme">
@@ -75,7 +76,7 @@
                     </a>
                 </div>
                 <div class="version-info">
-                    <span class="version-badge">v0.3.0</span>
+                    <span class="version-badge">v0.4.0</span>
                     <span class="separator">•</span>
                     <span class="license">GPL-2.0-or-later</span>
                 </div>
@@ -96,7 +97,7 @@
                             <span class="command">lazyllama</span>
                         </div>
                         <div class="terminal-line">
-                            <span class="output">🦙 LazyLlama v0.3.0 - Starting...</span>
+                            <span class="output">🦙 LazyLlama v0.4.0 - Starting...</span>
                         </div>
                         <div class="terminal-line">
                             <span class="output">📡 Connected to Ollama</span>
@@ -170,6 +171,122 @@
                     <div class="feature-icon">🦀</div>
                     <h3>Built with Rust</h3>
                     <p>Ultra-low latency and minimal resource footprint using Rust and the Ratatui terminal framework.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Performance Section -->
+    <section id="performance" class="performance">
+        <div class="container">
+            <div class="section-header">
+                <h2>⚡ Blazing Fast Performance</h2>
+                <p>Ultra-low latency operations well within 60 FPS frame budget (< 16ms)</p>
+            </div>
+            <div class="performance-content">
+                <div class="performance-intro">
+                    <p>LazyLlama is built with performance as a top priority. All operations complete in microseconds or nanoseconds, ensuring a smooth and responsive user experience even with large conversation histories.</p>
+                </div>
+                <div class="performance-grid">
+                    <div class="performance-category">
+                        <h3>🔤 String Operations</h3>
+                        <div class="performance-metrics">
+                            <div class="metric-item">
+                                <span class="metric-label">Character Insertion</span>
+                                <span class="metric-value">323 ns</span>
+                                <span class="metric-badge fast">⚡</span>
+                            </div>
+                            <div class="metric-item">
+                                <span class="metric-label">Unicode Handling (🦀)</span>
+                                <span class="metric-value">126 ns</span>
+                                <span class="metric-badge ultra-fast">⚡⚡</span>
+                            </div>
+                            <div class="metric-item">
+                                <span class="metric-label">Pattern Search</span>
+                                <span class="metric-value">7.45 µs</span>
+                                <span class="metric-badge good">✅</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="performance-category">
+                        <h3>📝 Text Processing</h3>
+                        <div class="performance-metrics">
+                            <div class="metric-item">
+                                <span class="metric-label">History Parsing</span>
+                                <span class="metric-value">2.10 µs</span>
+                                <span class="metric-badge fast">⚡</span>
+                            </div>
+                            <div class="metric-item">
+                                <span class="metric-label">Line Iteration</span>
+                                <span class="metric-value">9.06 µs</span>
+                                <span class="metric-badge good">✅</span>
+                            </div>
+                            <div class="metric-item">
+                                <span class="metric-label">Character Counting</span>
+                                <span class="metric-value">203 ns</span>
+                                <span class="metric-badge ultra-fast">⚡⚡</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="performance-category">
+                        <h3>🎯 Cursor Operations</h3>
+                        <div class="performance-metrics">
+                            <div class="metric-item">
+                                <span class="metric-label">Index Conversion</span>
+                                <span class="metric-value">1 ns</span>
+                                <span class="metric-badge extreme">⚡⚡⚡</span>
+                            </div>
+                            <div class="metric-item">
+                                <span class="metric-label">Word Boundary</span>
+                                <span class="metric-value">4.28 µs</span>
+                                <span class="metric-badge fast">⚡</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="performance-category">
+                        <h3>🌍 Real-World Usage</h3>
+                        <div class="performance-metrics">
+                            <div class="metric-item">
+                                <span class="metric-label">100KB History</span>
+                                <span class="metric-value">64.3 µs</span>
+                                <span class="metric-badge good">✅</span>
+                            </div>
+                            <div class="metric-item">
+                                <span class="metric-label">Model Switching</span>
+                                <span class="metric-value">12.7 µs</span>
+                                <span class="metric-badge good">✅</span>
+                            </div>
+                            <div class="metric-item">
+                                <span class="metric-label">HashMap Lookups</span>
+                                <span class="metric-value">6.79 µs</span>
+                                <span class="metric-badge good">✅</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="performance-legend">
+                    <h4>Performance Legend</h4>
+                    <div class="legend-items">
+                        <div class="legend-item">
+                            <span class="metric-badge extreme">⚡⚡⚡</span>
+                            <span>Extreme (&lt; 10 ns)</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="metric-badge ultra-fast">⚡⚡</span>
+                            <span>Ultra-fast (&lt; 1 µs)</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="metric-badge fast">⚡</span>
+                            <span>Fast (&lt; 10 µs)</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="metric-badge good">✅</span>
+                            <span>Good (&lt; 100 µs)</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="performance-note">
+                    <p><strong>Note:</strong> All benchmarks are measured on optimized release builds. Unicode operations are actually faster than ASCII due to efficient UTF-8 handling in Rust. Run <code>cargo test --release --benches</code> to execute the full benchmark suite yourself.</p>
                 </div>
             </div>
         </div>

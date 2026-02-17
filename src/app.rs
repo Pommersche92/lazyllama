@@ -62,6 +62,8 @@ pub struct App {
     pub model_inputs: HashMap<String, String>,
     /// Separate cursor positions maintained for each LLM model.
     pub model_cursors: HashMap<String, usize>,
+    /// Separate text selections maintained for each LLM model.
+    pub model_selections: HashMap<String, Option<usize>>,
     /// Separate conversation histories maintained for each LLM model.
     pub model_histories: HashMap<String, String>,
     /// Separate scroll positions maintained for each LLM model.
@@ -70,6 +72,8 @@ pub struct App {
     pub scroll: u16,
     /// Current cursor position in the input field (character index).
     pub cursor_pos: usize,
+    /// Starting position of text selection (None if no selection).
+    pub selection_start: Option<usize>,
     /// Flag indicating whether the view should automatically scroll to the bottom.
     pub autoscroll: bool,
     /// Indicates whether an AI query is currently being processed.
@@ -125,9 +129,11 @@ impl App {
             list_state: ListState::default(),
             input: String::new(),
             cursor_pos: 0,
+            selection_start: None,
             history: String::new(),
             model_inputs: HashMap::new(),
             model_cursors: HashMap::new(),
+            model_selections: HashMap::new(),
             model_histories: HashMap::new(),
             model_scrolls: HashMap::new(),
             scroll: 0,
@@ -174,6 +180,7 @@ impl App {
             for model in &self.models {
                 self.model_inputs.entry(model.clone()).or_insert_with(String::new);
                 self.model_cursors.entry(model.clone()).or_insert(0);
+                self.model_selections.entry(model.clone()).or_insert(None);
                 self.model_histories.entry(model.clone()).or_insert_with(String::new);
                 self.model_scrolls.entry(model.clone()).or_insert(0);
             }
@@ -210,6 +217,7 @@ impl App {
             if let Some(model) = self.models.get(index) {
                 self.model_inputs.insert(model.clone(), self.input.clone());
                 self.model_cursors.insert(model.clone(), self.cursor_pos);
+                self.model_selections.insert(model.clone(), self.selection_start);
                 self.model_histories.insert(model.clone(), self.history.clone());
                 self.model_scrolls.insert(model.clone(), self.scroll);
             }
@@ -242,6 +250,7 @@ impl App {
             if let Some(model) = self.models.get(index) {
                 self.input = self.model_inputs.get(model).cloned().unwrap_or_default();
                 self.cursor_pos = *self.model_cursors.get(model).unwrap_or(&0);
+                self.selection_start = *self.model_selections.get(model).unwrap_or(&None);
                 self.history = self.model_histories.get(model).cloned().unwrap_or_default();
                 self.scroll = *self.model_scrolls.get(model).unwrap_or(&0);
                 self.clamp_cursor();
@@ -253,8 +262,14 @@ impl App {
     ///
     /// This method performs a character-aware insertion (not byte-based),
     /// advances the cursor by one character, and resets the blink timer
-    /// so the caret remains visible after input.
+    /// so the caret remains visible after input. If there is an active
+    /// selection, it deletes the selection first.
     pub fn insert_char(&mut self, c: char) {
+        // Delete selection first if it exists
+        if self.selection_start.is_some() {
+            self.delete_selection();
+        }
+        
         let byte_idx = self.char_index_to_byte_index(self.cursor_pos);
         self.input.insert(byte_idx, c);
         self.cursor_pos = self.cursor_pos.saturating_add(1);
@@ -350,8 +365,9 @@ impl App {
     /// Moves the cursor one character to the left.
     ///
     /// No-op if already at the beginning of the input. Resets the blink
-    /// timer to keep the caret visible after navigation.
+    /// timer to keep the caret visible after navigation. Clears any active selection.
     pub fn move_cursor_left(&mut self) {
+        self.clear_selection();
         if self.cursor_pos > 0 {
             self.cursor_pos -= 1;
             self.reset_cursor_blink();
@@ -361,8 +377,9 @@ impl App {
     /// Moves the cursor one character to the right.
     ///
     /// No-op if already at the end of the input. Resets the blink timer to
-    /// keep the caret visible after navigation.
+    /// keep the caret visible after navigation. Clears any active selection.
     pub fn move_cursor_right(&mut self) {
+        self.clear_selection();
         let len = self.input.chars().count();
         if self.cursor_pos < len {
             self.cursor_pos += 1;
@@ -373,8 +390,9 @@ impl App {
     /// Moves the cursor to the start of the input.
     ///
     /// This is the Home key behavior. Resets the blink timer if the cursor
-    /// position changes.
+    /// position changes. Clears any active selection.
     pub fn move_cursor_home(&mut self) {
+        self.clear_selection();
         if self.cursor_pos != 0 {
             self.cursor_pos = 0;
             self.reset_cursor_blink();
@@ -384,8 +402,9 @@ impl App {
     /// Moves the cursor to the end of the input.
     ///
     /// This is the End key behavior. Resets the blink timer if the cursor
-    /// position changes.
+    /// position changes. Clears any active selection.
     pub fn move_cursor_end(&mut self) {
+        self.clear_selection();
         let len = self.input.chars().count();
         if self.cursor_pos != len {
             self.cursor_pos = len;
@@ -398,7 +417,9 @@ impl App {
     /// Word boundaries use `is_word_char` rules, treating non-alphanumeric
     /// characters (except underscore) as separators. Leading separators to
     /// the left are skipped before landing on the previous word boundary.
+    /// Clears any active selection.
     pub fn move_cursor_word_left(&mut self) {
+        self.clear_selection();
         if self.cursor_pos == 0 {
             return;
         }
@@ -423,7 +444,9 @@ impl App {
     /// Word boundaries use `is_word_char` rules, treating non-alphanumeric
     /// characters (except underscore) as separators. Leading separators to
     /// the right are skipped before landing on the next word boundary.
+    /// Clears any active selection.
     pub fn move_cursor_word_right(&mut self) {
+        self.clear_selection();
         let chars: Vec<char> = self.input.chars().collect();
         let len = chars.len();
         let mut i = self.cursor_pos.min(len);
@@ -476,6 +499,544 @@ impl App {
 
     pub fn is_word_char(c: char) -> bool {
         c.is_alphanumeric() || c == '_'
+    }
+
+    /// Clears the current text selection.
+    ///
+    /// This method removes any active selection by setting `selection_start` to `None`.
+    /// After calling this method, no text will be highlighted in the input field.
+    ///
+    /// # Behavior
+    ///
+    /// - Sets `selection_start` to `None`
+    /// - Does nothing if no selection is active
+    /// - Does not affect cursor position or input content
+    ///
+    /// # Usage
+    ///
+    /// This is typically called automatically when:
+    /// - Moving the cursor without Shift modifier
+    /// - Inserting new text
+    /// - Deleting text
+    pub fn clear_selection(&mut self) {
+        self.selection_start = None;
+    }
+
+    /// Starts a text selection at the current cursor position.
+    ///
+    /// This internal method initializes a new text selection by recording the
+    /// current cursor position as the selection anchor. If a selection is already
+    /// active, this method does nothing, preserving the original anchor point.
+    ///
+    /// # Behavior
+    ///
+    /// - Records current `cursor_pos` as `selection_start` if no selection exists
+    /// - Preserves existing `selection_start` if selection is already active
+    /// - Does not affect cursor position or input content
+    ///
+    /// # Usage
+    ///
+    /// Called automatically by cursor movement methods when Shift is pressed:
+    /// - `move_cursor_left_with_selection`
+    /// - `move_cursor_right_with_selection`
+    /// - Word-wise and line-wise selection methods
+    fn start_selection(&mut self) {
+        if self.selection_start.is_none() {
+            self.selection_start = Some(self.cursor_pos);
+        }
+    }
+
+    /// Returns the selection range as (start, end) with start <= end.
+    ///
+    /// This method calculates the normalized selection range where the start
+    /// position is always less than or equal to the end position, regardless
+    /// of the selection direction (forward or backward).
+    ///
+    /// # Returns
+    ///
+    /// - `Some((start, end))`: A tuple with start <= end if selection is active
+    /// - `None`: If no selection is active
+    ///
+    /// # Behavior
+    ///
+    /// The range is always normalized:
+    /// - If `selection_start <= cursor_pos`: Returns `(selection_start, cursor_pos)`
+    /// - If `selection_start > cursor_pos`: Returns `(cursor_pos, selection_start)`
+    ///
+    /// # Character Indexing
+    ///
+    /// The returned indices are character positions (not byte positions),
+    /// ensuring proper handling of multi-byte Unicode characters.
+    ///
+    /// # Usage
+    ///
+    /// Used internally by:
+    /// - `get_selected_text()`: To extract the text substring
+    /// - `delete_selection()`: To determine which text to delete
+    /// - UI rendering: To highlight the selected portion
+    pub fn get_selection_range(&self) -> Option<(usize, usize)> {
+        self.selection_start.map(|start| {
+            if start <= self.cursor_pos {
+                (start, self.cursor_pos)
+            } else {
+                (self.cursor_pos, start)
+            }
+        })
+    }
+
+    /// Returns the selected text, or None if no selection exists.
+    ///
+    /// Extracts the substring between the selection start and end positions,
+    /// properly handling Unicode characters by operating on character indices
+    /// rather than byte positions.
+    ///
+    /// # Returns
+    ///
+    /// - `Some(String)`: The selected text if an active selection exists
+    /// - `None`: If no selection is active or selection is empty
+    ///
+    /// # Character Safety
+    ///
+    /// This method operates on Unicode characters, not bytes:
+    /// - Multi-byte characters (e.g., emojis, accented letters) are handled correctly
+    /// - Selection boundaries respect character boundaries
+    /// - No risk of splitting multi-byte characters
+    ///
+    /// # Usage
+    ///
+    /// Used by:
+    /// - `copy_selection()`: To get the text to copy to clipboard
+    /// - UI rendering: To display selection information
+    /// - Testing: To verify selection behavior
+    pub fn get_selected_text(&self) -> Option<String> {
+        self.get_selection_range().map(|(start, end)| {
+            let chars: Vec<char> = self.input.chars().collect();
+            chars[start..end].iter().collect()
+        })
+    }
+
+    /// Deletes the currently selected text and clears the selection.
+    ///
+    /// This internal method removes the text within the active selection range,
+    /// repositions the cursor to the start of the removed text, and clears the
+    /// selection state. The operation is performed safely with respect to
+    /// character boundaries.
+    ///
+    /// # Behavior
+    ///
+    /// 1. Calculates normalized selection range (start <= end)
+    /// 2. Converts character indices to byte indices
+    /// 3. Removes the substring using `replace_range`
+    /// 4. Positions cursor at the start of the deleted range
+    /// 5. Clears the selection state
+    /// 6. Resets cursor blink timer
+    ///
+    /// # Character Safety
+    ///
+    /// - Uses character-based indices internally
+    /// - Converts to byte indices only for the actual deletion
+    /// - Preserves multi-byte character integrity
+    ///
+    /// # Side Effects
+    ///
+    /// - Modifies `self.input` by removing text
+    /// - Updates `self.cursor_pos`
+    /// - Clears `self.selection_start`
+    /// - Resets cursor blink state
+    ///
+    /// # Usage
+    ///
+    /// Called automatically by:
+    /// - `insert_char()`: Before inserting new text
+    /// - `insert_text_at_cursor()`: Before pasting
+    fn delete_selection(&mut self) {
+        if let Some((start, end)) = self.get_selection_range() {
+            let start_byte = self.char_index_to_byte_index(start);
+            let end_byte = self.char_index_to_byte_index(end);
+            self.input.replace_range(start_byte..end_byte, "");
+            self.cursor_pos = start;
+            self.clear_selection();
+            self.reset_cursor_blink();
+        }
+    }
+
+    /// Inserts text at the cursor position, replacing any selected text.
+    ///
+    /// This method provides smart text insertion behavior: if a selection is
+    /// active, it first deletes the selected text, then inserts the new text
+    /// at the cursor position. This matches standard text editor behavior.
+    ///
+    /// # Arguments
+    ///
+    /// * `text` - The string to insert at the cursor position
+    ///
+    /// # Behavior
+    ///
+    /// 1. If selection exists: Deletes selected text first
+    /// 2. Inserts the provided text at the current cursor position
+    /// 3. Advances cursor by the number of characters inserted
+    /// 4. Resets cursor blink timer to keep cursor visible
+    ///
+    /// # Character Handling
+    ///
+    /// - Properly counts Unicode characters (not bytes)
+    /// - Cursor advances by character count, not byte length
+    /// - Supports multi-byte characters and emojis
+    ///
+    /// # Use Cases
+    ///
+    /// - Pasting text from clipboard (`paste_from_clipboard`)
+    /// - Inserting multi-character strings
+    /// - Replacing selected text with new content
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// // Replace selected "world" with "Rust"
+    /// app.insert_text_at_cursor("Rust"); // "hello Rust" instead of "hello world"
+    /// ```
+    pub fn insert_text_at_cursor(&mut self, text: &str) {
+        // Delete selection first if it exists
+        if self.selection_start.is_some() {
+            self.delete_selection();
+        }
+        
+        // Insert text at cursor
+        let byte_idx = self.char_index_to_byte_index(self.cursor_pos);
+        self.input.insert_str(byte_idx, text);
+        self.cursor_pos += text.chars().count();
+        self.reset_cursor_blink();
+    }
+
+    /// Moves the cursor one character to the left while extending the selection.
+    ///
+    /// This method implements the Shift+Left keyboard shortcut behavior,
+    /// allowing users to select text character by character in the backward
+    /// direction. If no selection exists, it creates one starting from the
+    /// current cursor position.
+    ///
+    /// # Behavior
+    ///
+    /// 1. Starts a new selection if none exists (anchors at current position)
+    /// 2. Moves cursor one character to the left
+    /// 3. Extends or contracts the selection based on direction
+    /// 4. Resets cursor blink timer for visibility
+    ///
+    /// # Selection Dynamics
+    ///
+    /// - **No selection**: Creates selection from cursor position
+    /// - **Expanding left**: Increases selection size
+    /// - **Collapsing right**: Decreases selection size
+    /// - **At start**: No-op if cursor is at position 0
+    ///
+    /// # Keyboard Mapping
+    ///
+    /// - Primary: `Shift + Left Arrow`
+    pub fn move_cursor_left_with_selection(&mut self) {
+        self.start_selection();
+        if self.cursor_pos > 0 {
+            self.cursor_pos -= 1;
+            self.reset_cursor_blink();
+        }
+    }
+
+    /// Moves the cursor one character to the right while extending the selection.
+    ///
+    /// This method implements the Shift+Right keyboard shortcut behavior,
+    /// allowing users to select text character by character in the forward
+    /// direction. If no selection exists, it creates one starting from the
+    /// current cursor position.
+    ///
+    /// # Behavior
+    ///
+    /// 1. Starts a new selection if none exists (anchors at current position)
+    /// 2. Moves cursor one character to the right
+    /// 3. Extends or contracts the selection based on direction
+    /// 4. Resets cursor blink timer for visibility
+    ///
+    /// # Selection Dynamics
+    ///
+    /// - **No selection**: Creates selection from cursor position
+    /// - **Expanding right**: Increases selection size
+    /// - **Collapsing left**: Decreases selection size
+    /// - **At end**: No-op if cursor is at last position
+    ///
+    /// # Keyboard Mapping
+    ///
+    /// - Primary: `Shift + Right Arrow`
+    pub fn move_cursor_right_with_selection(&mut self) {
+        self.start_selection();
+        let len = self.input.chars().count();
+        if self.cursor_pos < len {
+            self.cursor_pos += 1;
+            self.reset_cursor_blink();
+        }
+    }
+
+    /// Moves the cursor one word to the left while extending the selection.
+    ///
+    /// This method implements the Ctrl+Shift+Left keyboard shortcut, enabling
+    /// users to select text word by word in the backward direction. It uses
+    /// the same word boundary detection as `move_cursor_word_left`, treating
+    /// alphanumeric characters and underscores as word constituents.
+    ///
+    /// # Behavior
+    ///
+    /// 1. Starts a new selection if none exists
+    /// 2. Skips over non-word characters (spaces, punctuation)
+    /// 3. Jumps to the beginning of the previous word
+    /// 4. Extends or contracts selection accordingly
+    ///
+    /// # Word Boundaries
+    ///
+    /// Uses `is_word_char` for detection:
+    /// - **Word characters**: Letters, digits, underscore
+    /// - **Separators**: Spaces, punctuation, special characters
+    ///
+    /// # Edge Cases
+    ///
+    /// - At start of input: No-op
+    /// - Multiple separators: Skips all before landing on word
+    ///
+    /// # Keyboard Mapping
+    ///
+    /// - Primary: `Ctrl + Shift + Left Arrow`
+    pub fn move_cursor_word_left_with_selection(&mut self) {
+        self.start_selection();
+        if self.cursor_pos == 0 {
+            return;
+        }
+        let chars: Vec<char> = self.input.chars().collect();
+        let mut i = self.cursor_pos.min(chars.len());
+
+        while i > 0 && !Self::is_word_char(chars[i - 1]) {
+            i -= 1;
+        }
+        while i > 0 && Self::is_word_char(chars[i - 1]) {
+            i -= 1;
+        }
+
+        if i != self.cursor_pos {
+            self.cursor_pos = i;
+            self.reset_cursor_blink();
+        }
+    }
+
+    /// Moves the cursor one word to the right while extending the selection.
+    ///
+    /// This method implements the Ctrl+Shift+Right keyboard shortcut, enabling
+    /// users to select text word by word in the forward direction. It uses
+    /// the same word boundary detection as `move_cursor_word_right`, treating
+    /// alphanumeric characters and underscores as word constituents.
+    ///
+    /// # Behavior
+    ///
+    /// 1. Starts a new selection if none exists
+    /// 2. Skips over non-word characters (spaces, punctuation)
+    /// 3. Jumps to the end of the next word
+    /// 4. Extends or contracts selection accordingly
+    ///
+    /// # Word Boundaries
+    ///
+    /// Uses `is_word_char` for detection:
+    /// - **Word characters**: Letters, digits, underscore
+    /// - **Separators**: Spaces, punctuation, special characters
+    ///
+    /// # Edge Cases
+    ///
+    /// - At end of input: No-op
+    /// - Multiple separators: Skips all before landing on word
+    ///
+    /// # Keyboard Mapping
+    ///
+    /// - Primary: `Ctrl + Shift + Right Arrow`
+    pub fn move_cursor_word_right_with_selection(&mut self) {
+        self.start_selection();
+        let chars: Vec<char> = self.input.chars().collect();
+        let len = chars.len();
+        let mut i = self.cursor_pos.min(len);
+
+        while i < len && !Self::is_word_char(chars[i]) {
+            i += 1;
+        }
+        while i < len && Self::is_word_char(chars[i]) {
+            i += 1;
+        }
+
+        if i != self.cursor_pos {
+            self.cursor_pos = i;
+            self.reset_cursor_blink();
+        }
+    }
+
+    /// Moves the cursor to the start of the input while extending the selection.
+    ///
+    /// This method implements the Shift+Home keyboard shortcut, allowing users
+    /// to select all text from the current cursor position to the beginning of
+    /// the input field in a single action.
+    ///
+    /// # Behavior
+    ///
+    /// 1. Starts a new selection if none exists
+    /// 2. Moves cursor to position 0 (start of input)
+    /// 3. Selection spans from original position to start
+    /// 4. Resets cursor blink timer if position changes
+    ///
+    /// # Use Cases
+    ///
+    /// - Quick selection of text from cursor to start
+    /// - Useful for replacing beginning of input
+    /// - Efficient bulk text selection
+    ///
+    /// # Keyboard Mapping
+    ///
+    /// - Primary: `Shift + Home`
+    /// - Alternative: `Shift + Ctrl + Home` (also supported)
+    pub fn move_cursor_home_with_selection(&mut self) {
+        self.start_selection();
+        if self.cursor_pos != 0 {
+            self.cursor_pos = 0;
+            self.reset_cursor_blink();
+        }
+    }
+
+    /// Moves the cursor to the end of the input while extending the selection.
+    ///
+    /// This method implements the Shift+End keyboard shortcut, allowing users
+    /// to select all text from the current cursor position to the end of the
+    /// input field in a single action.
+    ///
+    /// # Behavior
+    ///
+    /// 1. Starts a new selection if none exists
+    /// 2. Moves cursor to end of input (last character position)
+    /// 3. Selection spans from original position to end
+    /// 4. Resets cursor blink timer if position changes
+    ///
+    /// # Use Cases
+    ///
+    /// - Quick selection of text from cursor to end
+    /// - Useful for replacing end of input
+    /// - Efficient bulk text selection
+    ///
+    /// # Keyboard Mapping
+    ///
+    /// - Primary: `Shift + End`
+    /// - Alternative: `Shift + Ctrl + End` (also supported)
+    pub fn move_cursor_end_with_selection(&mut self) {
+        self.start_selection();
+        let len = self.input.chars().count();
+        if self.cursor_pos != len {
+            self.cursor_pos = len;
+            self.reset_cursor_blink();
+        }
+    }
+
+    /// Copies the currently selected text to the system clipboard.
+    ///
+    /// This method implements the copy-to-clipboard functionality, allowing
+    /// users to copy selected text for use in other applications or for pasting
+    /// later within LazyLlama. It uses the `arboard` crate for cross-platform
+    /// clipboard access.
+    ///
+    /// # Returns
+    ///
+    /// - `Ok(())`: Text successfully copied to clipboard
+    /// - `Err`: If no text is selected or clipboard access fails
+    ///
+    /// # Error Cases
+    ///
+    /// - **No selection**: Returns error "No text selected"
+    /// - **Clipboard unavailable**: System clipboard access denied
+    /// - **Platform issues**: OS-specific clipboard errors
+    ///
+    /// # Behavior
+    ///
+    /// 1. Checks if selection exists via `get_selected_text()`
+    /// 2. Creates new clipboard instance
+    /// 3. Writes selected text to clipboard
+    /// 4. Maintains selection state (does not clear)
+    ///
+    /// # Platform Support
+    ///
+    /// - **Windows**: Uses Win32 clipboard API
+    /// - **Linux**: Uses X11/Wayland clipboard
+    /// - **macOS**: Uses NSPasteboard
+    ///
+    /// # Keyboard Mapping
+    ///
+    /// - Primary: `Ctrl + Shift + C`
+    ///
+    /// # Usage
+    ///
+    /// ```ignore
+    /// if let Err(e) = app.copy_selection() {
+    ///     // Handle error (e.g., no selection)
+    /// }
+    /// ```
+    pub fn copy_selection(&self) -> Result<()> {
+        if let Some(text) = self.get_selected_text() {
+            let mut clipboard = arboard::Clipboard::new()?;
+            clipboard.set_text(text)?;
+            Ok(())
+        } else {
+            Err(anyhow::anyhow!("No text selected"))
+        }
+    }
+
+    /// Pastes text from the system clipboard at the cursor position.
+    ///
+    /// This method implements paste-from-clipboard functionality, retrieving
+    /// text from the system clipboard and inserting it at the current cursor
+    /// position. If a selection is active, the selected text is replaced by
+    /// the pasted content, matching standard text editor behavior.
+    ///
+    /// # Returns
+    ///
+    /// - `Ok(())`: Text successfully pasted from clipboard
+    /// - `Err`: If clipboard access fails or clipboard is empty
+    ///
+    /// # Error Cases
+    ///
+    /// - **Empty clipboard**: No text content available
+    /// - **Clipboard unavailable**: System clipboard access denied
+    /// - **Platform issues**: OS-specific clipboard errors
+    ///
+    /// # Behavior
+    ///
+    /// 1. Creates new clipboard instance
+    /// 2. Retrieves text from clipboard
+    /// 3. Calls `insert_text_at_cursor()` to insert text
+    /// 4. Automatically replaces selection if active
+    /// 5. Advances cursor to end of pasted text
+    ///
+    /// # Selection Handling
+    ///
+    /// - **With selection**: Replaces selected text with clipboard content
+    /// - **Without selection**: Inserts at cursor position
+    ///
+    /// # Platform Support
+    ///
+    /// - **Windows**: Uses Win32 clipboard API
+    /// - **Linux**: Uses X11/Wayland clipboard
+    /// - **macOS**: Uses NSPasteboard
+    ///
+    /// # Keyboard Mapping
+    ///
+    /// - Primary: `Ctrl + Shift + V`
+    ///
+    /// # Usage
+    ///
+    /// ```ignore
+    /// if let Err(e) = app.paste_from_clipboard() {
+    ///     // Handle error (e.g., clipboard empty)
+    /// }
+    /// ```
+    pub fn paste_from_clipboard(&mut self) -> Result<()> {
+        let mut clipboard = arboard::Clipboard::new()?;
+        let text = clipboard.get_text()?;
+        self.insert_text_at_cursor(&text);
+        Ok(())
     }
 
     /// Switches to the next model in the list (Down arrow key behavior).

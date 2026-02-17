@@ -8,16 +8,16 @@ The website is available at: [https://pommersche92.github.io/lazyllama](https://
 
 ## 📁 Structure
 
-```
+```text
 docs/
 ├── index.html          # Main landing page
 ├── css/
 │   └── styles.css      # Comprehensive styling with light/dark theme support
 ├── js/
 │   └── theme.js        # Theme management and interactive features
-├── .nojekyll          # Tells GitHub Pages to serve static files directly
-├── _config.yml        # GitHub Pages configuration (optional)
-└── README.md          # This file
+├── .nojekyll           # Tells GitHub Pages to serve static files directly
+├── _config.yml         # GitHub Pages configuration (optional)
+└── README.md           # This file
 ```
 
 ## ✨ Features
@@ -33,6 +33,7 @@ docs/
 
 - **Hero Section**: Eye-catching introduction with terminal preview
 - **Features Grid**: Showcase of LazyLlama's key capabilities
+- **Performance Metrics**: Detailed benchmark results demonstrating ultra-low latency
 - **Installation Guide**: Step-by-step setup instructions
 - **Keyboard Controls**: Visual reference for all shortcuts
 - **Resource Links**: Direct links to GitHub, Crates.io, documentation, and developer website

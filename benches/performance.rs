@@ -21,8 +21,16 @@
 //! ## Running Benchmarks
 //!
 //! ```bash
-//! cargo bench
+//! # Run all benchmarks with output
+//! cargo test --release --benches -- --nocapture --test-threads=1
+//!
+//! # Or run with default test runner
+//! cargo test --release --benches
 //! ```
+//!
+//! Note: These benchmarks use the `#[test]` attribute instead of unstable `#[bench]`,
+//! making them compatible with stable Rust. Use `cargo test --release --benches`
+//! instead of `cargo bench`.
 
 use std::hint::black_box;
 use std::time::{Duration, Instant};
@@ -110,8 +118,9 @@ mod performance_tests {
         // Unicode character handling
         bench_fn("unicode_insertion", || {
             let mut s = String::with_capacity(1000);
-            for i in 0..50 {
-                s.insert(i.min(s.len()), '🦀');
+            for _ in 0..50 {
+                let len = s.len();
+                s.insert(len, '🦀');
             }
             drop(s);
         }, 1000);
