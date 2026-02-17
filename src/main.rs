@@ -116,72 +116,147 @@ async fn main() -> Result<()> {
                 }
                 
                 let is_ctrl = key.modifiers.contains(KeyModifiers::CONTROL);
-                match (key.code, is_ctrl) {
-                    (KeyCode::Char('q'), true) => should_quit = true,
-                    (KeyCode::Char('c'), true) => {
+                let is_shift = key.modifiers.contains(KeyModifiers::SHIFT);
+                
+                match (key.code, is_ctrl, is_shift) {
+                    // Quit application
+                    (KeyCode::Char('q'), true, false) => should_quit = true,
+                    
+                    // Clear history
+                    (KeyCode::Char('c'), true, false) => {
                         // Lösche nur den aktuellen Modell-Buffer
                         app.history.clear();
                         app.scroll = 0;
                         app.autoscroll = true;
                         app.save_current_model_buffers();
                     }
-                    (KeyCode::Char('s'), true) => app.autoscroll = !app.autoscroll,
-                    (KeyCode::Left, true) => {
+                    
+                    // Copy selection (Ctrl+Shift+C)
+                    (KeyCode::Char('c'), true, true) | (KeyCode::Char('C'), true, _) => {
+                        if let Err(e) = app.copy_selection() {
+                            // Silently ignore errors (e.g., no selection)
+                            if app.debug_keys {
+                                app.debug_last_key = Some(format!("Copy failed: {}", e));
+                            }
+                        }
+                    }
+                    
+                    // Paste from clipboard (Ctrl+Shift+V)
+                    (KeyCode::Char('v'), true, true) | (KeyCode::Char('V'), true, _) => {
+                        if let Err(e) = app.paste_from_clipboard() {
+                            // Silently ignore errors
+                            if app.debug_keys {
+                                app.debug_last_key = Some(format!("Paste failed: {}", e));
+                            }
+                        }
+                    }
+                    
+                    // Toggle autoscroll
+                    (KeyCode::Char('s'), true, false) => app.autoscroll = !app.autoscroll,
+                    
+                    // Cursor movement with Ctrl+Shift (word selection)
+                    (KeyCode::Left, true, true) => {
+                        app.move_cursor_word_left_with_selection();
+                    }
+                    (KeyCode::Right, true, true) => {
+                        app.move_cursor_word_right_with_selection();
+                    }
+                    
+                    // Cursor movement with Shift (character selection)
+                    (KeyCode::Left, false, true) => {
+                        app.move_cursor_left_with_selection();
+                    }
+                    (KeyCode::Right, false, true) => {
+                        app.move_cursor_right_with_selection();
+                    }
+                    
+                    // Home/End with Shift (select to start/end)
+                    (KeyCode::Home, _, true) => {
+                        app.move_cursor_home_with_selection();
+                    }
+                    (KeyCode::End, _, true) => {
+                        app.move_cursor_end_with_selection();
+                    }
+                    
+                    // Cursor movement with Ctrl (word jump)
+                    (KeyCode::Left, true, false) => {
                         app.move_cursor_word_left();
                     }
-                    (KeyCode::Right, true) => {
+                    (KeyCode::Right, true, false) => {
                         app.move_cursor_word_right();
                     }
-                    (KeyCode::Home, _) => {
+                    
+                    // Home/End without modifiers
+                    (KeyCode::Home, false, false) => {
                         app.move_cursor_home();
                     }
-                    (KeyCode::End, _) => {
+                    (KeyCode::End, false, false) => {
                         app.move_cursor_end();
                     }
-                    (KeyCode::Up, _) => {
+                    
+                    // Model selection
+                    (KeyCode::Up, false, false) => {
                         app.select_previous_model();
                     }
-                    (KeyCode::Down, _) => {
+                    (KeyCode::Down, false, false) => {
                         app.select_next_model();
                     }
-                    (KeyCode::PageUp, _) => {
+                    
+                    // Page scrolling
+                    (KeyCode::PageUp, _, _) => {
                         app.autoscroll = false;
                         app.scroll = app.scroll.saturating_sub(5);
                     }
-                    (KeyCode::PageDown, _) => {
+                    (KeyCode::PageDown, _, _) => {
                         app.autoscroll = false;
                         app.scroll = app.scroll.saturating_add(5);
                     }
-                    (KeyCode::Left, _) => {
+                    
+                    // Normal cursor movement (no modifiers)
+                    (KeyCode::Left, false, false) => {
                         app.move_cursor_left();
                     }
-                    (KeyCode::Right, _) => {
+                    (KeyCode::Right, false, false) => {
                         app.move_cursor_right();
                     }
-                    (KeyCode::Backspace, true) => {
+                    
+                    // Word deletion
+                    (KeyCode::Backspace, true, _) => {
                         app.delete_word_left();
                     }
-                    (KeyCode::Char('h'), true) => {
+                    (KeyCode::Char('h'), true, _) => {
                         // Kitty maps Ctrl+Backspace to Ctrl+H, so handle it as word deletion.
                         app.delete_word_left();
                     }
-                    (KeyCode::Delete, true) => {
+                    (KeyCode::Delete, true, _) => {
                         app.delete_word_right();
                     }
-                    (KeyCode::Delete, _) => {
+                    
+                    // Normal deletion
+                    (KeyCode::Delete, false, false) => {
                         app.delete_forward();
                     }
-                    (KeyCode::Enter, _) => {
+                    (KeyCode::Backspace, false, _) => {
+                        app.backspace();
+                    }
+                    
+                    // Enter handling
+                    (KeyCode::Enter, _, true) => {
+                        // Shift+Enter: Insert newline for multiline input
+                        app.insert_char('\n');
+                    }
+                    (KeyCode::Enter, _, false) => {
+                        // Normal Enter: Send query
                         if !app.input.is_empty() && !app.is_loading {
                             app.send_query(&mut terminal).await?;
                         }
                     }
-                    (KeyCode::Char(c), false) => {
+                    
+                    // Character input
+                    (KeyCode::Char(c), false, _) => {
                         app.insert_char(c);
                     }
-                    (KeyCode::Backspace, _) => {
-                        app.backspace();
-                    }
+                    
                     _ => {}
                 }
                 

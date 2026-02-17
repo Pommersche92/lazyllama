@@ -110,8 +110,9 @@ mod performance_tests {
         // Unicode character handling
         bench_fn("unicode_insertion", || {
             let mut s = String::with_capacity(1000);
-            for i in 0..50 {
-                s.insert(i.min(s.len()), '🦀');
+            for _ in 0..50 {
+                let len = s.len();
+                s.insert(len, '🦀');
             }
             drop(s);
         }, 1000);

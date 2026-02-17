@@ -41,14 +41,20 @@
 | Key | Action |
 | --- | --- |
 | `Enter` | Send message / Re-activate Autoscroll |
+| `Shift` + `Enter` | Insert newline (multiline input) |
 | `C-q` | Quit application safely |
 | `C-c` | Clear chat history |
 | `C-s` | Manually toggle Autoscroll |
+| `Ctrl` + `Shift` + `C` | Copy selected text to clipboard |
+| `Ctrl` + `Shift` + `V` | Paste text from clipboard |
 | `↑` / `↓` | **Switch between AI Models** (loads separate buffers per model) |
 | `PgUp` / `PgDn` | Scroll history (activates Manual Mode) |
 | `←` / `→` | Move cursor left/right in the input field |
+| `Shift` + `←` / `→` | Select text character-wise |
 | `Home` / `End` | Jump to start/end of the input line |
+| `Shift` + `Home` / `End` | Select text to start/end of line |
 | `Ctrl` + `←` / `→` | Move cursor word-wise |
+| `Ctrl` + `Shift` + `←` / `→` | Select text word-wise |
 | `Backspace` | Delete character before the cursor |
 | `Delete` | Delete character after the cursor |
 | `Ctrl` + `Backspace` | Delete previous word |
@@ -77,9 +83,9 @@ cargo doc --no-deps --open
 
 ## 🧪 Testing
 
-LazyLlama features a comprehensive test suite with 63 tests covering all functionality:
+LazyLlama features a comprehensive test suite with 78 tests covering all functionality:
 
-* **Unit Tests**: 53 modularized tests for individual components
+* **Unit Tests**: 68 modularized tests for individual components
 * **Integration Tests**: 7 end-to-end tests for component interaction
 * **Performance Benchmarks**: Continuous performance monitoring
 
@@ -96,6 +102,29 @@ cargo test --test test_unit
 cargo bench
 ```
 
+### Performance Benchmarks
+
+LazyLlama is optimized for ultra-low latency with all operations completing well within the 16ms frame budget for 60 FPS rendering:
+
+| Category | Operation | Avg. Time | Performance |
+| ---------- | ----------- | ----------- | ------------- |
+| **String Operations** | Character Insertion | 323 ns | ⚡ |
+| | Unicode Insertion (🦀) | 126 ns | ⚡⚡ |
+| | Pattern Matching | 7.45 µs | ✅ |
+| **Text Parsing** | History Parsing | 2.10 µs | ⚡ |
+| | Line Iteration | 9.06 µs | ✅ |
+| | Character Counting | 203 ns | ⚡⚡ |
+| **Cursor Operations** | Index Conversion | 1 ns | ⚡⚡⚡ |
+| | Word Boundary Detection | 4.28 µs | ⚡ |
+| **Memory** | HashMap Lookups | 6.79 µs | ✅ |
+| | Vec Pre-allocation | 586 ns | ⚡⚡ |
+| **Real-World** | Large History (100KB) | 64.3 µs | ✅ |
+| | Model Switching | 12.7 µs | ✅ |
+
+**Legend**: ⚡⚡⚡ < 10 ns | ⚡⚡ < 1 µs | ⚡ < 10 µs | ✅ < 100 µs
+
+All benchmarks run on optimized release builds. Run `cargo test --release --benches` to execute the full benchmark suite.
+
 For detailed testing information, test structure, and maintenance guidelines, see [TESTING.md](TESTING.md).
 
 ## 📄 License
@@ -106,6 +135,25 @@ This project is licensed under the **GPL-2.0-or-later**. See the [LICENSE](LICEN
 
 ### v0.4.0 - February 2026
 
+* **📏 Dynamic Input Height**: Input field now automatically expands from 1 to 4 lines based on content
+  * Grows dynamically when pressing `Shift+Enter` to add newlines
+  * Minimum height: 1 line, Maximum height: 4 lines
+  * Provides more comfortable editing space for longer prompts
+* **✨ Improved Multiline Rendering**: Proper line-by-line rendering with selection and cursor support
+  * Each line is rendered independently with correct styling
+  * Selection highlighting works correctly across multiple lines
+  * Cursor position is accurately displayed within multiline text
+* **📝 Multiline Input**: Press `Shift+Enter` to insert line breaks in the input field for multiline messages
+* **✂️ Text Selection**: Select text in the input field using keyboard shortcuts
+  * `Shift` + `←` / `→`: Select text character by character
+  * `Shift` + `Ctrl` + `←` / `→`: Select text word by word
+  * `Shift` + `Home` / `End`: Select from cursor to start/end of input
+* **📋 Clipboard Operations**: Copy and paste functionality for the input field
+  * `Ctrl` + `Shift` + `C`: Copy selected text to clipboard
+  * `Ctrl` + `Shift` + `V`: Paste text from clipboard at cursor position
+* **🎨 Visual Selection Feedback**: Selected text is highlighted with a blue background for clear visibility
+* **🔄 Smart Text Insertion**: Pasting text automatically replaces any active selection
+* **📦 Dependency**: Added `arboard` library for cross-platform clipboard access
 * **📦 Dependency Updates**: Updated all dependencies to their latest versions
   * **ratatui**: 0.26 → 0.30.0 (TUI framework with improved frame API)
   * **crossterm**: 0.27 → 0.29.0 (terminal manipulation library)
@@ -114,9 +162,9 @@ This project is licensed under the **GPL-2.0-or-later**. See the [LICENSE](LICEN
   * **tempfile**: 3.8 → 3.25.0 (dev dependency for test file management)
   * **tokio-test**: 0.4 → 0.4.5 (dev dependency for async testing)
 * **🔄 API Migration**: Updated code to use `frame.area()` instead of deprecated `frame.size()` method
-* **🧪 Comprehensive Test Suite**: Added 63 tests for robust code quality assurance
-  * **Unit Tests**: 53 modularized tests extracted to separate files for better maintainability
-    * App functionality: 18 tests for cursor navigation, model management, text editing
+* **🧪 Comprehensive Test Suite**: Added 78 tests for robust code quality assurance
+  * **Unit Tests**: 68 modularized tests extracted to separate files for better maintainability
+    * App functionality: 33 tests for cursor navigation, model management, text editing, selection, clipboard
     * UI components: 13 tests for markdown parsing, syntax highlighting, text rendering
     * Utilities: 10 tests for filesystem operations, history management
     * Event handling: 12 tests for key combinations, terminal integration

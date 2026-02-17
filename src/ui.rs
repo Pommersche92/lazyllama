@@ -79,8 +79,8 @@ pub const BANNER: &str = r#"
 /// │   Models    │    Conversation History   │ Flexible
 /// │   (25%)     │         (75%)             │ height
 /// │             ├───────────────────────────┤
-/// │             │       Input Field         │ 3 lines
-/// ├─────────────┴───────────────────────────┤
+/// │             │      Input Field          │ 3-6 lines
+/// ├─────────────┴───────────────────────────┤  (dynamic)
 /// │            Status Bar                   │ 1 line
 /// └─────────────────────────────────────────┘
 /// ```
@@ -89,7 +89,10 @@ pub const BANNER: &str = r#"
 ///
 /// - **Model List**: Shows available AI models with status indicators
 /// - **Chat History**: Displays conversation with markdown and code highlighting
-/// - **Input Field**: Text entry with loading animation and status
+/// - **Input Field**: Multiline text entry with dynamic height (1-4 content lines)
+///   - Automatically expands based on newline characters
+///   - Selection highlighting with blue background
+///   - Blinking cursor with reversed colors
 /// - **Status Bar**: Keyboard shortcuts and current model information
 /// - **Responsive Design**: Adapts to terminal size changes
 /// - **Smart Scrolling**: Auto-scroll with manual override capability
@@ -169,9 +172,13 @@ pub fn ui(f: &mut Frame, app: &mut App) {
         .highlight_symbol(">> ");
     f.render_stateful_widget(list, main_chunks[0], &mut app.list_state);
 
+    // Calculate dynamic input height based on newlines (1-4 content lines + 2 for borders)
+    let input_line_count = app.input.lines().count().max(1).min(4);
+    let input_height = (input_line_count + 2) as u16; // +2 for top and bottom border
+
     let chat_chunks = Layout::default()
         .direction(Direction::Vertical)
-        .constraints([Constraint::Min(3), Constraint::Length(3)])
+        .constraints([Constraint::Min(3), Constraint::Length(input_height)])
         .split(main_chunks[1]);
 
     // Verlauf parsen und Scrollen berechnen
@@ -220,49 +227,94 @@ pub fn ui(f: &mut Frame, app: &mut App) {
         " > Input ".into()
     };
 
+    // Build multiline input text with selection and cursor support
     let input_chars: Vec<char> = app.input.chars().collect();
     let cursor_pos = app.cursor_pos.min(input_chars.len());
-    let mut input_spans = Vec::new();
-
-    if cursor_pos > 0 {
-        let before: String = input_chars[..cursor_pos].iter().collect();
-        input_spans.push(Span::raw(before));
-    }
-
+    let selection_range = app.get_selection_range();
+    
     let cursor_style = Style::default().add_modifier(Modifier::REVERSED);
-    if cursor_pos < input_chars.len() {
-        let ch = input_chars[cursor_pos].to_string();
-        if app.cursor_visible {
-            input_spans.push(Span::styled(ch, cursor_style));
-        } else {
-            input_spans.push(Span::raw(ch));
-        }
+    let selection_style = Style::default()
+        .bg(Color::Blue)
+        .fg(Color::White);
 
-        if cursor_pos + 1 < input_chars.len() {
-            let after: String = input_chars[cursor_pos + 1..].iter().collect();
-            input_spans.push(Span::raw(after));
+    // Build lines with proper selection and cursor handling
+    let mut lines = Vec::new();
+    let mut current_line_spans = Vec::new();
+    let mut char_index = 0;
+
+    for ch in input_chars.iter().chain(std::iter::once(&'\0')) {
+        let is_newline = *ch == '\n';
+        let is_end = *ch == '\0';
+        
+        if !is_newline && !is_end {
+            // Determine style for this character
+            let mut style = Style::default();
+            let mut is_cursor = false;
+            
+            if char_index == cursor_pos && app.cursor_visible {
+                style = cursor_style;
+                is_cursor = true;
+            }
+            
+            if let Some((sel_start, sel_end)) = selection_range {
+                if char_index >= sel_start && char_index < sel_end {
+                    style = selection_style;
+                    if char_index == cursor_pos && app.cursor_visible {
+                        // Cursor within selection - combine styles
+                        style = selection_style.add_modifier(Modifier::REVERSED);
+                    }
+                }
+            }
+            
+            if is_cursor || style.bg.is_some() || style.add_modifier != Modifier::empty() {
+                current_line_spans.push(Span::styled(ch.to_string(), style));
+            } else {
+                current_line_spans.push(Span::raw(ch.to_string()));
+            }
+            
+            char_index += 1;
+        } else if is_newline {
+            // End current line and start new one
+            if current_line_spans.is_empty() {
+                current_line_spans.push(Span::raw(" "));
+            }
+            lines.push(Line::from(current_line_spans.clone()));
+            current_line_spans.clear();
+            char_index += 1;
+        } else {
+            // End of input (\0 marker)
+            if char_index == cursor_pos && app.cursor_visible {
+                current_line_spans.push(Span::styled(" ", cursor_style));
+            }
+            if !current_line_spans.is_empty() || lines.is_empty() {
+                if current_line_spans.is_empty() {
+                    current_line_spans.push(Span::raw(" "));
+                }
+                lines.push(Line::from(current_line_spans));
+            }
+            break;
         }
-    } else if app.cursor_visible {
-        input_spans.push(Span::styled(" ", cursor_style));
     }
 
-    let input_text = Text::from(Line::from(input_spans));
+    let input_text = Text::from(lines);
 
     f.render_widget(
-        Paragraph::new(input_text).block(
-            Block::default()
-                .borders(Borders::ALL)
-                .title(input_title)
-                .border_style(if app.is_loading {
-                    Style::default().fg(Color::Yellow)
-                } else {
-                    Style::default()
-                }),
-        ),
+        Paragraph::new(input_text)
+            .block(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .title(input_title)
+                    .border_style(if app.is_loading {
+                        Style::default().fg(Color::Yellow)
+                    } else {
+                        Style::default()
+                    }),
+            )
+            .wrap(Wrap { trim: false }),
         chat_chunks[1],
     );
     let mut status = format!(
-        " C-q: Quit | C-c: Clear | C-s: AutoScroll | PgUp/Dn: Scroll | ↑↓: Switch Model [{}] ",
+        " C-q: Quit | C-S-c: Copy | C-S-v: Paste | S-Enter: Newline | PgUp/Dn: Scroll | ↑↓: Model [{}] ",
         selected_model
     );
     if app.debug_keys {
