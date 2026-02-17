@@ -98,8 +98,8 @@ cargo test
 # Run only unit tests
 cargo test --test test_unit
 
-# Run benchmarks
-cargo bench
+# Run benchmarks with detailed output
+cargo test --release --benches -- --nocapture --test-threads=1
 ```
 
 ### Performance Benchmarks

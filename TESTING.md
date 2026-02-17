@@ -67,12 +67,14 @@ cargo test --test integration_tests
 ### Performance tests (benchmarks)
 
 ```bash
-# Run benchmarks
-cargo bench
+# Run all benchmarks with detailed output
+cargo test --release --benches -- --nocapture --test-threads=1
 
-# Run specific benchmark groups
-cargo bench string_operations
-cargo bench text_parsing
+# Run benchmarks without output details
+cargo test --release --benches
+
+# Note: These use #[test] instead of #[bench] for stable Rust compatibility
+# Traditional 'cargo bench' won't work as expected
 ```
 
 ### Test output with details
@@ -183,13 +185,18 @@ The benchmarks measure:
 ### Running Benchmarks
 
 ```bash
-# All benchmarks
-cargo bench
+# All benchmarks with detailed timing output
+cargo test --release --benches -- --nocapture --test-threads=1
 
-# Specific benchmark group
-cargo bench string_operations
-cargo bench text_parsing
+# All benchmarks (summary only)
+cargo test --release --benches
+
+# Specific benchmark test
+cargo test --release --benches bench_string_operations -- --nocapture
 ```
+
+**Note:** Benchmarks use `#[test]` attributes for stable Rust compatibility.
+Traditional `cargo bench` (which requires unstable `#[bench]`) is not used.
 
 ## Test Maintenance
 
