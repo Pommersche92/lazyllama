@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="auto">
+<html lang="en" data-theme="auto" data-design="glassmorphism">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -28,23 +28,84 @@
     <!-- CSS -->
     <link rel="stylesheet" href="css/fonts.css">
     <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/glassmorphism.css">
 </head>
 <body>
     <!-- Navigation -->
     <nav class="navbar" role="navigation">
         <div class="nav-container">
             <div class="nav-brand">
-                <span class="nav-logo">🦙</span>
-                <span class="nav-title">LazyLlama</span>
+                <!--<img src="images/lazyllama-logo.svg" alt="LazyLlama Logo" class="nav-logo-svg">-->
+                🦙 <span class="nav-title">LazyLlama</span>
             </div>
-            <div class="nav-links">
+            <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Toggle navigation menu" aria-expanded="false">
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+            </button>
+            <div class="nav-links" id="navLinks">
                 <a href="#features" class="nav-link">Features</a>
                 <a href="#performance" class="nav-link">Performance</a>
                 <a href="#installation" class="nav-link">Installation</a>
                 <a href="#links" class="nav-link">Links</a>
-                <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme" title="Toggle light/dark theme">
-                    <span class="theme-icon">🌙</span>
-                </button>
+                
+                <!-- Desktop: Buttons -->
+                <!--<button class="design-toggle desktop-only" id="designToggle" aria-label="Toggle design style" title="Toggle design style">
+                    <span class="design-icon">✨</span>
+                </button>-->
+                <div class="theme-toggle-container desktop-only">
+                    <button class="theme-toggle" id="themeToggle" aria-label="Select theme" title="Select theme">
+                        <span class="theme-icon">🌙</span>
+                    </button>
+                    <div class="theme-dropdown" id="themeDropdown">
+                        <button class="theme-option" data-theme="auto" aria-label="Auto theme">
+                            <span class="theme-option-icon">🔄</span>
+                            <span class="theme-option-label">Auto</span>
+                        </button>
+                        <button class="theme-option" data-theme="light" aria-label="Light theme">
+                            <span class="theme-option-icon">☀️</span>
+                            <span class="theme-option-label">Light</span>
+                        </button>
+                        <button class="theme-option" data-theme="dark" aria-label="Dark theme">
+                            <span class="theme-option-icon">🌙</span>
+                            <span class="theme-option-label">Dark</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Mobile: Menu Items with Subitems -->
+                <div class="mobile-menu-section mobile-only">
+                    <!--<div class="mobile-menu-item">
+                        <span class="mobile-menu-label">Design</span>
+                        <div class="mobile-menu-subitems">
+                            <button class="mobile-menu-subitem" data-design="classic">
+                                <span class="subitem-icon">🎨</span>
+                                <span>Classic</span>
+                            </button>
+                            <button class="mobile-menu-subitem" data-design="glassmorphism">
+                                <span class="subitem-icon">✨</span>
+                                <span>Glassmorphism</span>
+                            </button>
+                        </div>
+                    </div>-->
+                    <div class="mobile-menu-item">
+                        <span class="mobile-menu-label">Theme</span>
+                        <div class="mobile-menu-subitems">
+                            <button class="mobile-menu-subitem mobile-theme-option" data-theme="auto">
+                                <span class="subitem-icon">🔄</span>
+                                <span>Auto</span>
+                            </button>
+                            <button class="mobile-menu-subitem mobile-theme-option" data-theme="light">
+                                <span class="subitem-icon">☀️</span>
+                                <span>Light</span>
+                            </button>
+                            <button class="mobile-menu-subitem mobile-theme-option" data-theme="dark">
+                                <span class="subitem-icon">🌙</span>
+                                <span>Dark</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </nav>
@@ -58,6 +119,7 @@
                     <span>Fast • Lightweight • Terminal</span>
                 </div>
                 <h1 class="hero-title">
+                    <!--<img src="images/lazyllama-logo.svg" alt="LazyLlama" class="hero-logo-svg">-->
                     🦙 <span class="gradient-text">LazyLlama</span>
                 </h1>
                 <p class="hero-subtitle">
@@ -458,6 +520,49 @@ cargo install --path .</code></pre>
             </div>
         </div>
     </footer>
+
+    <!-- Cookie Consent Banner -->
+    <div class="cookie-consent" id="cookieConsent" role="dialog" aria-live="polite" aria-label="Cookie Consent" hidden>
+        <div class="cookie-consent-content">
+            <div class="cookie-consent-text">
+                <h3>🍪 Cookie Notice</h3>
+                <p>This website uses essential cookies to remember your theme and design preferences. We don't use tracking or analytics cookies. The site is hosted on GitHub Pages, which may set its own cookies for basic functionality and security.</p>
+                <details class="cookie-details">
+                    <summary>Cookie Details</summary>
+                    <div class="cookie-categories">
+                        <div class="cookie-category">
+                            <div class="cookie-category-header">
+                                <strong>Essential Cookies</strong>
+                                <span class="cookie-required">(Required)</span>
+                            </div>
+                            <p>These cookies are necessary for the website to function properly:</p>
+                            <ul>
+                                <li><code>lazyllama_theme</code> - Stores your theme preference (auto/light/dark)</li>
+                                <li><code>lazyllama_design</code> - Stores your design preference (classic/glassmorphism)</li>
+                                <li><code>lazyllama_cookie_consent</code> - Remembers that you've seen this notice</li>
+                            </ul>
+                        </div>
+                        <div class="cookie-category">
+                            <div class="cookie-category-header">
+                                <strong>GitHub Pages</strong>
+                            </div>
+                            <p>This site is hosted on GitHub Pages. GitHub may set cookies for:</p>
+                            <ul>
+                                <li>Basic site functionality and security</li>
+                                <li>DDoS protection</li>
+                            </ul>
+                            <p>Learn more in <a href="https://docs.github.com/en/site-policy/privacy-policies/github-privacy-statement" target="_blank" rel="noopener">GitHub's Privacy Statement</a>.</p>
+                        </div>
+                    </div>
+                </details>
+            </div>
+            <div class="cookie-consent-actions">
+                <button class="cookie-btn cookie-btn-accept" id="cookieAccept">
+                    Accept
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- JavaScript -->
     <script src="js/theme.js"></script>

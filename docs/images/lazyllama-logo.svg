@@ -1,0 +1,128 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <defs>
+    <!-- Glassmorphism Gradient -->
+    <linearGradient id="terminalGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#14b8a6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#a855f7;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Glow Effect -->
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    
+    <!-- Stronger Glow -->
+    <filter id="strongGlow">
+      <feGaussianBlur stdDeviation="5" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Terminal Window -->
+  <g filter="url(#glow)">
+    <!-- Terminal Window Base -->
+    <rect x="30" y="40" width="140" height="120" 
+          rx="8" ry="8"
+          fill="url(#terminalGradient)" 
+          opacity="0.2"/>
+    
+    <!-- Terminal Window Frame (glassmorphic) -->
+    <rect x="30" y="40" width="140" height="120" 
+          rx="8" ry="8"
+          fill="none"
+          stroke="url(#terminalGradient)" 
+          stroke-width="2.5"
+          opacity="0.9"/>
+    
+    <!-- Title Bar -->
+    <rect x="30" y="40" width="140" height="25" 
+          rx="8" ry="8"
+          fill="url(#terminalGradient)" 
+          opacity="0.3"/>
+    <line x1="30" y1="65" x2="170" y2="65" 
+          stroke="url(#terminalGradient)" 
+          stroke-width="1.5"
+          opacity="0.6"/>
+    
+    <!-- Window Buttons (classic style) -->
+    <circle cx="45" cy="52.5" r="4" fill="#ef4444" opacity="0.8"/>
+    <circle cx="60" cy="52.5" r="4" fill="#f59e0b" opacity="0.8"/>
+    <circle cx="75" cy="52.5" r="4" fill="#10b981" opacity="0.8"/>
+    
+    <!-- Command Prompt with blur effect -->
+    <text x="45" y="95" 
+          font-family="monospace" 
+          font-size="20" 
+          font-weight="bold"
+          fill="url(#terminalGradient)"
+          filter="url(#strongGlow)">
+      $ _
+    </text>
+    
+    <!-- Terminal Lines (code representation) -->
+    <line x1="45" y1="110" x2="120" y2="110" 
+          stroke="url(#terminalGradient)" 
+          stroke-width="2"
+          opacity="0.6"
+          stroke-linecap="round"/>
+    <line x1="45" y1="125" x2="145" y2="125" 
+          stroke="url(#terminalGradient)" 
+          stroke-width="2"
+          opacity="0.5"
+          stroke-linecap="round"/>
+    <line x1="45" y1="140" x2="100" y2="140" 
+          stroke="url(#terminalGradient)" 
+          stroke-width="2"
+          opacity="0.4"
+          stroke-linecap="round"/>
+    
+    <!-- Additional Glow Accent -->
+    <rect x="28" y="38" width="144" height="124" 
+          rx="10" ry="10"
+          fill="none"
+          stroke="url(#terminalGradient)" 
+          stroke-width="0.5"
+          opacity="0.3"/>
+    
+    <!-- Corner Accents (futuristic) -->
+    <!--<path d="M 35 45 L 30 45 L 30 50" 
+          stroke="#3b82f6" 
+          stroke-width="2" 
+          fill="none"
+          opacity="0.8"/>
+    <path d="M 165 45 L 170 45 L 170 50" 
+          stroke="#a855f7" 
+          stroke-width="2" 
+          fill="none"
+          opacity="0.8"/>
+    <path d="M 35 155 L 30 155 L 30 150" 
+          stroke="#14b8a6" 
+          stroke-width="2" 
+          fill="none"
+          opacity="0.8"/>
+    <path d="M 165 155 L 170 155 L 170 150" 
+          stroke="#a855f7" 
+          stroke-width="2" 
+          fill="none"
+          opacity="0.8"/>-->
+  </g>
+  
+  <!-- Cursor Blink Effect Circle -->
+  <circle cx="75" cy="88" r="2" 
+          fill="url(#terminalGradient)"
+          opacity="0.9">
+    <animate attributeName="opacity" 
+             values="0.9;0.2;0.9" 
+             dur="1.5s" 
+             repeatCount="indefinite"/>
+  </circle>
+</svg>
