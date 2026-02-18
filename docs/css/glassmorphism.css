@@ -36,6 +36,13 @@
   --glass-blur-lg: blur(24px);
 }
 
+/* Firefox-specific scrollbar colors - Force with * selector */
+:root[data-design="glassmorphism"],
+:root[data-design="glassmorphism"] * {
+  scrollbar-color: #8b5cf6 #1e293b !important;
+  scrollbar-width: auto !important;
+}
+
 /* Light Theme Glassmorphism - Pastellverlauf + dunkle Schrift für gute Lesbarkeit */
 [data-theme="light"][data-design="glassmorphism"] {
   /* Heller Pastellverlauf (Blau/Lila/Türkis) */
@@ -60,6 +67,13 @@
   scrollbar-color: #6366f1 #e0e7ff;
 }
 
+/* Firefox light theme scrollbar */
+:root[data-theme="light"][data-design="glassmorphism"],
+:root[data-theme="light"][data-design="glassmorphism"] * {
+  scrollbar-color: #6366f1 #e0e7ff !important;
+  scrollbar-width: auto !important;
+}
+
 /* Auto Theme - helles System: Pastellvariante */
 @media (prefers-color-scheme: light) {
   [data-theme="auto"][data-design="glassmorphism"] {
@@ -80,6 +94,13 @@
   [data-theme="auto"][data-design="glassmorphism"] html {
     scrollbar-width: auto;
     scrollbar-color: #6366f1 #e0e7ff;
+  }
+  
+  /* Firefox auto-light scrollbar */
+  :root[data-theme="auto"][data-design="glassmorphism"],
+  :root[data-theme="auto"][data-design="glassmorphism"] * {
+    scrollbar-color: #6366f1 #e0e7ff !important;
+    scrollbar-width: auto !important;
   }
 }
 
@@ -102,6 +123,13 @@
   scrollbar-color: #8b5cf6 #1e293b;
 }
 
+/* Firefox dark theme scrollbar */
+:root[data-theme="dark"][data-design="glassmorphism"],
+:root[data-theme="dark"][data-design="glassmorphism"] * {
+  scrollbar-color: #8b5cf6 #1e293b !important;
+  scrollbar-width: auto !important;
+}
+
 @media (prefers-color-scheme: dark) {
   [data-theme="auto"][data-design="glassmorphism"] {
     --glass-bg-base: linear-gradient(135deg, #1e1b4b 0%, #312e81 30%, #1e3a8a 60%, #0f172a 100%);
@@ -119,6 +147,13 @@
   [data-theme="auto"][data-design="glassmorphism"] html {
     scrollbar-width: auto;
     scrollbar-color: #8b5cf6 #1e293b;
+  }
+  
+  /* Firefox auto-dark scrollbar */
+  :root[data-theme="auto"][data-design="glassmorphism"],
+  :root[data-theme="auto"][data-design="glassmorphism"] * {
+    scrollbar-color: #8b5cf6 #1e293b !important;
+    scrollbar-width: auto !important;
   }
 }
 
@@ -222,6 +257,35 @@
 }
 
 /* ===== SCROLLBAR OVERRIDE FOR CHROMIUM/WEBKIT ===== */
+/* GLOBAL Scrollbar - applies to all scrollbars regardless of HTML attributes */
+::-webkit-scrollbar {
+  width: 14px !important;
+  height: 14px !important;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(30, 41, 59, 0.4) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border-radius: 0 !important;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(59, 130, 246, 0.85), rgba(168, 85, 247, 0.85)) !important;
+  border-radius: 7px !important;
+  border: 2px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 2px 10px rgba(59, 130, 246, 0.4),
+              0 0 20px rgba(168, 85, 247, 0.3),
+              inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(59, 130, 246, 1), rgba(168, 85, 247, 1)) !important;
+  box-shadow: 0 0 15px rgba(168, 85, 247, 0.8),
+              0 0 30px rgba(59, 130, 246, 0.5),
+              inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+}
+
 /* Force custom scrollbar on all Chromium-based browsers */
 html[data-design="glassmorphism"]::-webkit-scrollbar {
   width: 14px !important;
@@ -1892,5 +1956,209 @@ html[data-theme="dark"][data-design="glassmorphism"]::-webkit-scrollbar-thumb:ho
     background: rgba(255, 255, 255, 0.55);
     border-color: rgba(99, 102, 241, 0.22);
     color: rgba(15, 23, 42, 0.92);
+  }
+}
+
+/* ===== CUSTOM SCROLLBAR IMPLEMENTATION ===== */
+
+/* Hide native scrollbar */
+html {
+  overflow: -moz-scrollbars-none;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+html::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+body {
+  overflow-x: hidden;
+}
+
+/* Custom scrollbar container */
+.custom-scrollbar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 14px;
+  height: 100vh;
+  z-index: 99999;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.custom-scrollbar.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Custom scrollbar thumb - default dark theme */
+.custom-scrollbar-thumb {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  border-radius: 7px;
+  cursor: grab;
+  transition: all 0.2s ease;
+  
+  /* Glassmorphism styling - Dark theme */
+  background: linear-gradient(180deg, 
+    rgba(59, 130, 246, 0.85) 0%, 
+    rgba(168, 85, 247, 0.85) 100%);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 
+    0 2px 10px rgba(59, 130, 246, 0.4),
+    0 0 20px rgba(168, 85, 247, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.custom-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, 
+    rgba(59, 130, 246, 1) 0%, 
+    rgba(168, 85, 247, 1) 100%);
+  box-shadow: 
+    0 0 15px rgba(168, 85, 247, 0.8),
+    0 0 30px rgba(59, 130, 246, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.custom-scrollbar-thumb.active,
+.custom-scrollbar.dragging .custom-scrollbar-thumb {
+  cursor: grabbing;
+  background: linear-gradient(180deg, 
+    rgba(59, 130, 246, 1) 0%, 
+    rgba(168, 85, 247, 1) 100%);
+  box-shadow: 
+    0 0 20px rgba(168, 85, 247, 1),
+    0 0 40px rgba(59, 130, 246, 0.7),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+/* Light theme scrollbar */
+[data-theme="light"] .custom-scrollbar-thumb {
+  background: linear-gradient(180deg, 
+    rgba(99, 102, 241, 0.7) 0%, 
+    rgba(168, 85, 247, 0.7) 100%);
+  border: 2px solid rgba(255, 255, 255, 0.7);
+  box-shadow: 
+    0 2px 8px rgba(99, 102, 241, 0.3),
+    0 0 15px rgba(168, 85, 247, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+[data-theme="light"] .custom-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, 
+    rgba(99, 102, 241, 0.9) 0%, 
+    rgba(168, 85, 247, 0.9) 100%);
+  box-shadow: 
+    0 0 12px rgba(99, 102, 241, 0.5),
+    0 0 25px rgba(168, 85, 247, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+[data-theme="light"] .custom-scrollbar-thumb.active,
+[data-theme="light"] .custom-scrollbar.dragging .custom-scrollbar-thumb {
+  background: linear-gradient(180deg, 
+    rgba(99, 102, 241, 1) 0%, 
+    rgba(168, 85, 247, 1) 100%);
+  box-shadow: 
+    0 0 15px rgba(99, 102, 241, 0.7),
+    0 0 30px rgba(168, 85, 247, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 1);
+}
+
+/* Auto theme - follows system preference */
+@media (prefers-color-scheme: light) {
+  [data-theme="auto"] .custom-scrollbar-thumb {
+    background: linear-gradient(180deg, 
+      rgba(99, 102, 241, 0.7) 0%, 
+      rgba(168, 85, 247, 0.7) 100%);
+    border: 2px solid rgba(255, 255, 255, 0.7);
+    box-shadow: 
+      0 2px 8px rgba(99, 102, 241, 0.3),
+      0 0 15px rgba(168, 85, 247, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  }
+
+  [data-theme="auto"] .custom-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, 
+      rgba(99, 102, 241, 0.9) 0%, 
+      rgba(168, 85, 247, 0.9) 100%);
+    box-shadow: 
+      0 0 12px rgba(99, 102, 241, 0.5),
+      0 0 25px rgba(168, 85, 247, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  }
+
+  [data-theme="auto"] .custom-scrollbar-thumb.active,
+  [data-theme="auto"] .custom-scrollbar.dragging .custom-scrollbar-thumb {
+    background: linear-gradient(180deg, 
+      rgba(99, 102, 241, 1) 0%, 
+      rgba(168, 85, 247, 1) 100%);
+    box-shadow: 
+      0 0 15px rgba(99, 102, 241, 0.7),
+      0 0 30px rgba(168, 85, 247, 0.5),
+      inset 0 1px 0 rgba(255, 255, 255, 1);
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  [data-theme="auto"] .custom-scrollbar-thumb {
+    background: linear-gradient(180deg, 
+      rgba(59, 130, 246, 0.85) 0%, 
+      rgba(168, 85, 247, 0.85) 100%);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 
+      0 2px 10px rgba(59, 130, 246, 0.4),
+      0 0 20px rgba(168, 85, 247, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  }
+
+  [data-theme="auto"] .custom-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, 
+      rgba(59, 130, 246, 1) 0%, 
+      rgba(168, 85, 247, 1) 100%);
+    box-shadow: 
+      0 0 15px rgba(168, 85, 247, 0.8),
+      0 0 30px rgba(59, 130, 246, 0.5),
+      inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  }
+
+  [data-theme="auto"] .custom-scrollbar-thumb.active,
+  [data-theme="auto"] .custom-scrollbar.dragging .custom-scrollbar-thumb {
+    background: linear-gradient(180deg, 
+      rgba(59, 130, 246, 1) 0%, 
+      rgba(168, 85, 247, 1) 100%);
+    box-shadow: 
+      0 0 20px rgba(168, 85, 247, 1),
+      0 0 40px rgba(59, 130, 246, 0.7),
+      inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  }
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .custom-scrollbar {
+    width: 8px;
+  }
+  
+  .custom-scrollbar-thumb {
+    border-width: 1px;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .custom-scrollbar,
+  .custom-scrollbar-thumb {
+    transition: none;
   }
 }
