@@ -1,0 +1,13 @@
+# AUR git repositories (cloned from aur.archlinux.org)
+aur-repo/
+
+# Build artifacts
+*.tar.gz
+*.tar.xz
+*.pkg.tar.zst
+*.pkg.tar.xz
+pkg/
+src/
+
+# makepkg generated files
+*.log
