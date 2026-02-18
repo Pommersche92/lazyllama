@@ -91,6 +91,8 @@
 html {
   scroll-behavior: smooth;
   font-size: 16px;
+  overflow-x: hidden;
+  width: 100%;
 }
 
 body {
@@ -99,6 +101,9 @@ body {
   color: var(--color-text-primary);
   background-color: var(--color-bg-primary);
   transition: background-color 0.3s ease, color 0.3s ease;
+  overflow-x: hidden;
+  width: 100%;
+  position: relative;
 }
 
 /* Typography */
@@ -148,6 +153,7 @@ a:hover {
   top: 0;
   left: 0;
   right: 0;
+  width: 100%;
   z-index: 1000;
   background: rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(10px);
@@ -181,6 +187,8 @@ a:hover {
   gap: 0.5rem;
   font-weight: 600;
   font-size: 1.25rem;
+  flex-shrink: 1;
+  min-width: 0;
 }
 
 .nav-logo {
@@ -1130,11 +1138,14 @@ kbd {
 @media (max-width: 768px) {
   .nav-container {
     padding: 1rem;
+    width: 100%;
+    max-width: 100%;
   }
   
   /* Show hamburger menu on mobile */
   .mobile-menu-toggle {
     display: flex;
+    flex-shrink: 0;
   }
   
   /* Hide nav-links by default on mobile */
@@ -1318,14 +1329,56 @@ kbd {
   
   .container {
     padding: 0 1rem;
+    max-width: 100%;
+    width: 100%;
   }
   
   section {
     padding: 4rem 0;
+    width: 100%;
+    max-width: 100%;
   }
   
   .hero {
     padding: 6rem 0 3rem;
+    width: 100%;
+    max-width: 100%;
+  }
+  
+  .hero-container {
+    max-width: 100%;
+    width: 100%;
+  }
+  
+  .hero-content,
+  .hero-visual,
+  .features-grid,
+  .performance-grid,
+  .controls-grid,
+  .links-grid {
+    max-width: 100%;
+    width: 100%;
+  }
+  
+  /* Prevent text overflow */
+  h1, h2, h3, h4, h5, h6, p {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+  
+  /* Prevent code blocks from overflowing */
+  .code-block,
+  pre,
+  code {
+    max-width: 100%;
+    overflow-x: auto;
+    word-wrap: break-word;
+  }
+  
+  /* Prevent images from overflowing */
+  img {
+    max-width: 100%;
+    height: auto;
   }
 }
 

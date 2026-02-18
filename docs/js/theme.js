@@ -261,7 +261,7 @@ class DesignManager {
   constructor() {
     this.designKey = 'lazyllama-design';
     this.designs = ['classic', 'glassmorphism'];
-    this.currentDesign = 'glassmorphism';//this.getStoredDesign() || 'glassmorphism';
+    this.currentDesign = 'c';//this.getStoredDesign() || 'glassmorphism';
     
     this.init();
   }
@@ -714,6 +714,33 @@ class CookieConsent {
 }
 
 /**
+ * Fix viewport height for mobile browsers
+ * Addresses the issue with the address bar showing/hiding on scroll
+ */
+function fixMobileViewportHeight() {
+  // Function to set the actual viewport height
+  const setVH = () => {
+    const vh = window.innerHeight * 0.01;
+    document.documentElement.style.setProperty('--vh', `${vh}px`);
+  };
+  
+  // Set on load
+  setVH();
+  
+  // Update on resize (throttled)
+  let resizeTimeout;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(setVH, 100);
+  });
+  
+  // Update on orientation change
+  window.addEventListener('orientationchange', () => {
+    setTimeout(setVH, 100);
+  });
+}
+
+/**
  * Initialize all components when DOM is ready
  */
 document.addEventListener('DOMContentLoaded', () => {
@@ -734,6 +761,9 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Initialize performance enhancements
   new PerformanceEnhancements();
+  
+  // Fix viewport height for mobile browsers (address bar issue)
+  fixMobileViewportHeight();
   
   // Add loading completion class for any CSS animations
   document.body.classList.add('loaded');
