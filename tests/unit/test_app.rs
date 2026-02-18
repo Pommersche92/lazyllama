@@ -66,6 +66,7 @@ fn create_test_app() -> App {
         model_histories: HashMap::new(),
         model_scrolls: HashMap::new(),
         scroll: 0,
+        input_scroll: 0,
         autoscroll: true,
         is_loading: false,
         ollama: Ollama::default(),

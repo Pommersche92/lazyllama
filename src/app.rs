@@ -70,6 +70,8 @@ pub struct App {
     pub model_scrolls: HashMap<String, u16>,
     /// Current vertical scroll position in the conversation history.
     pub scroll: u16,
+    /// Current vertical scroll position in the input field.
+    pub input_scroll: u16,
     /// Current cursor position in the input field (character index).
     pub cursor_pos: usize,
     /// Starting position of text selection (None if no selection).
@@ -137,6 +139,7 @@ impl App {
             model_histories: HashMap::new(),
             model_scrolls: HashMap::new(),
             scroll: 0,
+            input_scroll: 0,
             autoscroll: true,
             is_loading: false,
             ollama,
@@ -408,6 +411,104 @@ impl App {
         let len = self.input.chars().count();
         if self.cursor_pos != len {
             self.cursor_pos = len;
+            self.reset_cursor_blink();
+        }
+    }
+
+    /// Moves the cursor one line up in multiline input.
+    ///
+    /// Attempts to preserve the column position when moving to the previous line.
+    /// If the previous line is shorter, moves to its end. Clears any active selection.
+    pub fn move_cursor_up(&mut self) {
+        self.clear_selection();
+        let chars: Vec<char> = self.input.chars().collect();
+        
+        // Find current line start and column position
+        let mut line_start = 0;
+        let mut col = 0;
+        for i in 0..self.cursor_pos.min(chars.len()) {
+            if chars[i] == '\n' {
+                line_start = i + 1;
+                col = 0;
+            } else {
+                col += 1;
+            }
+        }
+        
+        // If we're on the first line, do nothing
+        if line_start == 0 {
+            return;
+        }
+        
+        // Find previous line start
+        let mut prev_line_start = 0;
+        for i in 0..line_start - 1 {
+            if chars[i] == '\n' {
+                prev_line_start = i + 1;
+            }
+        }
+        
+        // Calculate new cursor position on previous line
+        let prev_line_len = line_start - prev_line_start - 1; // -1 for the newline
+        let new_cursor_pos = prev_line_start + col.min(prev_line_len);
+        
+        if new_cursor_pos != self.cursor_pos {
+            self.cursor_pos = new_cursor_pos;
+            self.reset_cursor_blink();
+        }
+    }
+
+    /// Moves the cursor one line down in multiline input.
+    ///
+    /// Attempts to preserve the column position when moving to the next line.
+    /// If the next line is shorter, moves to its end. Clears any active selection.
+    pub fn move_cursor_down(&mut self) {
+        self.clear_selection();
+        let chars: Vec<char> = self.input.chars().collect();
+        let len = chars.len();
+        
+        // Find current line start and column position
+        let mut line_start = 0;
+        let mut col = 0;
+        for i in 0..self.cursor_pos.min(len) {
+            if chars[i] == '\n' {
+                line_start = i + 1;
+                col = 0;
+            } else {
+                col += 1;
+            }
+        }
+        
+        // Find next line start (current line end)
+        let mut next_line_start = None;
+        for i in line_start..len {
+            if chars[i] == '\n' {
+                next_line_start = Some(i + 1);
+                break;
+            }
+        }
+        
+        // If there's no next line, do nothing
+        let next_line_start = match next_line_start {
+            Some(pos) => pos,
+            None => return,
+        };
+        
+        // Find next line end
+        let mut next_line_end = len;
+        for i in next_line_start..len {
+            if chars[i] == '\n' {
+                next_line_end = i;
+                break;
+            }
+        }
+        
+        // Calculate new cursor position on next line
+        let next_line_len = next_line_end - next_line_start;
+        let new_cursor_pos = next_line_start + col.min(next_line_len);
+        
+        if new_cursor_pos != self.cursor_pos {
+            self.cursor_pos = new_cursor_pos;
             self.reset_cursor_blink();
         }
     }

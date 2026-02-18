@@ -9,7 +9,7 @@
 * **Code Highlighting:** Syntax blocks are visually separated with custom borders and background colors.
 * **Smart Scrolling:** * `AUTOSCROLL`: Automatically follows the AI output.
   * `MANUAL SCROLL`: Locks the view (🔒) when you use PageUp/Down, allowing you to read previous messages undisturbed.
-* **Model Management:** Easily switch between installed Ollama models using arrow keys with **separate input/output buffers per model**.
+* **Model Management:** Easily switch between installed Ollama models using Ctrl+arrow keys with **separate input/output buffers per model**.
 * **Smart Buffer Management:** Each LLM maintains its own chat history, input text, and scroll position.
 * **Automatic Logging:** Every chat session is automatically saved as a text file in `~/.local/share/lazyllama/` (both combined and per-model histories).
 * **Performance:** Built with Rust and Ratatui for ultra-low latency and minimal resource footprint.
@@ -47,7 +47,8 @@
 | `C-s` | Manually toggle Autoscroll |
 | `Ctrl` + `Shift` + `C` | Copy selected text to clipboard |
 | `Ctrl` + `Shift` + `V` | Paste text from clipboard |
-| `↑` / `↓` | **Switch between AI Models** (loads separate buffers per model) |
+| `Ctrl` + `↑` / `↓` | **Switch between AI Models** (loads separate buffers per model) |
+| `↑` / `↓` | Move cursor up/down between lines in multiline input |
 | `PgUp` / `PgDn` | Scroll history (activates Manual Mode) |
 | `←` / `→` | Move cursor left/right in the input field |
 | `Shift` + `←` / `→` | Select text character-wise |
@@ -133,11 +134,23 @@ This project is licensed under the **GPL-2.0-or-later**. See the [LICENSE](LICEN
 
 ## 📝 Changelog
 
+### v0.4.1 - February 2026
+
+* **🔼 Extended Input Height**: Input field now expands up to 5 lines (increased from 4)
+  * Maximum height: 5 lines, giving more space for longer prompts
+* **📍 Smart Cursor Scrolling**: Input field automatically scrolls to keep cursor visible
+  * When cursor moves beyond visible area, the input scrolls automatically
+  * Smooth navigation in long multiline inputs
+* **⌨️ Improved Keybindings**:
+  * `Ctrl` + `↑` / `↓`: Switch between AI models (changed from plain arrow keys)
+  * `↑` / `↓`: Move cursor up/down between lines in multiline input (new feature)
+  * More intuitive navigation in multiline text editing
+
 ### v0.4.0 - February 2026
 
-* **📏 Dynamic Input Height**: Input field now automatically expands from 1 to 4 lines based on content
+* **📏 Dynamic Input Height**: Input field now automatically expands from 1 to 5 lines based on content
   * Grows dynamically when pressing `Shift+Enter` to add newlines
-  * Minimum height: 1 line, Maximum height: 4 lines
+  * Minimum height: 1 line, Maximum height: 5 lines
   * Provides more comfortable editing space for longer prompts
 * **✨ Improved Multiline Rendering**: Proper line-by-line rendering with selection and cursor support
   * Each line is rendered independently with correct styling
@@ -186,7 +199,7 @@ This project is licensed under the **GPL-2.0-or-later**. See the [LICENSE](LICEN
 ### v0.2.0 - February 2026
 
 * **🎯 Per-Model Buffer Management**: Each LLM now maintains separate input buffers, chat histories, and scroll positions
-* **🔄 Smart Model Switching**: Arrow keys now seamlessly switch between models while preserving individual states  
+* **🔄 Smart Model Switching**: Ctrl+Arrow keys now seamlessly switch between models while preserving individual states  
 * **💾 Enhanced Logging**: Separate history files are saved for each model on application exit
 * **🎨 Improved UI**: Model list shows buffer status indicators and current model highlighting
 * **🪟 Windows Compatibility**: Fixed double character input issue on Windows by filtering key event types

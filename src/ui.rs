@@ -79,7 +79,7 @@ pub const BANNER: &str = r#"
 /// │   Models    │    Conversation History   │ Flexible
 /// │   (25%)     │         (75%)             │ height
 /// │             ├───────────────────────────┤
-/// │             │      Input Field          │ 3-6 lines
+/// │             │      Input Field          │ 3-7 lines
 /// ├─────────────┴───────────────────────────┤  (dynamic)
 /// │            Status Bar                   │ 1 line
 /// └─────────────────────────────────────────┘
@@ -89,7 +89,7 @@ pub const BANNER: &str = r#"
 ///
 /// - **Model List**: Shows available AI models with status indicators
 /// - **Chat History**: Displays conversation with markdown and code highlighting
-/// - **Input Field**: Multiline text entry with dynamic height (1-4 content lines)
+/// - **Input Field**: Multiline text entry with dynamic height (1-5 content lines)
 ///   - Automatically expands based on newline characters
 ///   - Selection highlighting with blue background
 ///   - Blinking cursor with reversed colors
@@ -172,8 +172,8 @@ pub fn ui(f: &mut Frame, app: &mut App) {
         .highlight_symbol(">> ");
     f.render_stateful_widget(list, main_chunks[0], &mut app.list_state);
 
-    // Calculate dynamic input height based on newlines (1-4 content lines + 2 for borders)
-    let input_line_count = app.input.lines().count().max(1).min(4);
+    // Calculate dynamic input height based on newlines (1-5 content lines + 2 for borders)
+    let input_line_count = app.input.lines().count().max(1).min(5);
     let input_height = (input_line_count + 2) as u16; // +2 for top and bottom border
 
     let chat_chunks = Layout::default()
@@ -237,6 +237,12 @@ pub fn ui(f: &mut Frame, app: &mut App) {
         .bg(Color::Blue)
         .fg(Color::White);
 
+    // Pre-calculate which line the cursor is on by counting newlines before cursor
+    let cursor_line = input_chars.iter()
+        .take(cursor_pos)
+        .filter(|&&c| c == '\n')
+        .count();
+    
     // Build lines with proper selection and cursor handling
     let mut lines = Vec::new();
     let mut current_line_spans = Vec::new();
@@ -283,18 +289,46 @@ pub fn ui(f: &mut Frame, app: &mut App) {
             char_index += 1;
         } else {
             // End of input (\0 marker)
-            if char_index == cursor_pos && app.cursor_visible {
-                current_line_spans.push(Span::styled(" ", cursor_style));
-            }
-            if !current_line_spans.is_empty() || lines.is_empty() {
-                if current_line_spans.is_empty() {
+            // If cursor is at the end, ensure line is visible even when cursor blinks
+            if char_index == cursor_pos {
+                if app.cursor_visible {
+                    current_line_spans.push(Span::styled(" ", cursor_style));
+                } else {
+                    // Placeholder space to keep empty line visible when cursor is invisible
                     current_line_spans.push(Span::raw(" "));
                 }
+            }
+            
+            // Add final line if it has content or if it's the first line
+            if !current_line_spans.is_empty() {
                 lines.push(Line::from(current_line_spans));
+            } else if lines.is_empty() {
+                // Ensure at least one line exists
+                lines.push(Line::from(vec![Span::raw(" ")]));
             }
             break;
         }
     }
+
+    // Calculate input scrolling to keep cursor visible  
+    // Do NOT modify app state during rendering - only calculate local scroll offset
+    let visible_input_height = input_height.saturating_sub(2) as usize; // Subtract borders
+    let total_input_lines = lines.len();
+    
+    // Calculate the optimal scroll position based on cursor location
+    let mut scroll_offset = app.input_scroll;
+    
+    if cursor_line < scroll_offset as usize {
+        // Cursor is above visible area, scroll up
+        scroll_offset = cursor_line as u16;
+    } else if cursor_line >= (scroll_offset as usize + visible_input_height) {
+        // Cursor is below visible area, scroll down
+        scroll_offset = (cursor_line + 1).saturating_sub(visible_input_height) as u16;
+    }
+    
+    // Clamp scroll to valid range
+    let max_input_scroll = total_input_lines.saturating_sub(visible_input_height);
+    scroll_offset = scroll_offset.min(max_input_scroll as u16);
 
     let input_text = Text::from(lines);
 
@@ -310,11 +344,12 @@ pub fn ui(f: &mut Frame, app: &mut App) {
                         Style::default()
                     }),
             )
-            .wrap(Wrap { trim: false }),
+            .wrap(Wrap { trim: false })
+            .scroll((scroll_offset, 0)),
         chat_chunks[1],
     );
     let mut status = format!(
-        " C-q: Quit | C-S-c: Copy | C-S-v: Paste | S-Enter: Newline | PgUp/Dn: Scroll | ↑↓: Model [{}] ",
+        " C-q: Quit | C-S-c: Copy | C-S-v: Paste | S-Enter: Newline | PgUp/Dn: Scroll | C-↑↓: Model [{}] ",
         selected_model
     );
     if app.debug_keys {

@@ -42,7 +42,8 @@
 //! - `Ctrl+Q`: Quit the application
 //! - `Ctrl+C`: Clear current model's chat history
 //! - `Ctrl+S`: Toggle autoscroll mode
-//! - `Arrow Keys`: Switch between AI models
+//! - `Ctrl+Arrow Up/Down`: Switch between AI models
+//! - `Arrow Up/Down`: Move cursor between lines in multiline input
 //! - `Page Up/Down`: Manual scrolling
 //! - `Enter`: Send message to AI
 //!
@@ -80,7 +81,8 @@ use std::{io, time::Duration};
 /// - `Ctrl+Q`: Graceful application exit
 /// - `Ctrl+C`: Clear current model's buffer
 /// - `Ctrl+S`: Toggle autoscroll behavior
-/// - `Up/Down Arrow`: Switch between AI models with buffer persistence
+/// - `Ctrl+Up/Down Arrow`: Switch between AI models with buffer persistence
+/// - `Up/Down Arrow`: Navigate cursor between lines in multiline input
 /// - `Page Up/Down`: Manual scrolling with autoscroll disable
 /// - `Enter`: Send query to selected AI model
 /// - `Backspace`: Delete characters from input
@@ -194,12 +196,20 @@ async fn main() -> Result<()> {
                         app.move_cursor_end();
                     }
                     
-                    // Model selection
-                    (KeyCode::Up, false, false) => {
+                    // Model selection with Ctrl+Up/Down
+                    (KeyCode::Up, true, false) => {
                         app.select_previous_model();
                     }
-                    (KeyCode::Down, false, false) => {
+                    (KeyCode::Down, true, false) => {
                         app.select_next_model();
+                    }
+                    
+                    // Cursor line movement with Up/Down
+                    (KeyCode::Up, false, false) => {
+                        app.move_cursor_up();
+                    }
+                    (KeyCode::Down, false, false) => {
+                        app.move_cursor_down();
                     }
                     
                     // Page scrolling
