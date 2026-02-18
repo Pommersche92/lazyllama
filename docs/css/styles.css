@@ -922,6 +922,11 @@ section {
   padding: 1rem;
   margin: 1rem 0;
   overflow-x: auto;
+  overflow-y: hidden;
+  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
+  -webkit-overflow-scrolling: touch;
 }
 
 .code-block pre {
@@ -929,10 +934,19 @@ section {
   font-size: 0.875rem;
   line-height: 1.5;
   color: var(--color-text-primary);
+  margin: 0;
+  padding: 0;
+  white-space: pre;
+  overflow-wrap: normal;
+  word-wrap: normal;
+  word-break: normal;
 }
 
 .code-block code {
   font-family: inherit;
+  white-space: pre;
+  overflow-wrap: normal;
+  word-wrap: normal;
 }
 
 /* Controls Section */
@@ -1366,13 +1380,20 @@ kbd {
     overflow-wrap: break-word;
   }
   
-  /* Prevent code blocks from overflowing */
-  .code-block,
-  pre,
-  code {
+  /* Ensure code blocks stay within bounds on mobile */
+  .code-block {
     max-width: 100%;
+    width: 100%;
     overflow-x: auto;
-    word-wrap: break-word;
+    margin-left: 0;
+    margin-right: 0;
+  }
+  
+  .code-block pre,
+  .code-block code {
+    white-space: pre;
+    word-wrap: normal;
+    overflow-wrap: normal;
   }
   
   /* Prevent images from overflowing */

@@ -261,7 +261,7 @@ class DesignManager {
   constructor() {
     this.designKey = 'lazyllama-design';
     this.designs = ['classic', 'glassmorphism'];
-    this.currentDesign = 'c';//this.getStoredDesign() || 'glassmorphism';
+    this.currentDesign = 'glassmorphism';//this.getStoredDesign() || 'glassmorphism';
     
     this.init();
   }
