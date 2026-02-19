@@ -174,8 +174,8 @@ build_flatpak() {
     # Clean previous build
     rm -rf flatpak-build flatpak-repo
     
-    # Build
-    flatpak-builder --force-clean --disable-rofiles-fuse \
+    # Build and export to repo
+    flatpak-builder --force-clean --disable-rofiles-fuse --repo=flatpak-repo \
         flatpak-build flatpak/app.pommersche.LazyLlama.json
     
     log_success "Flatpak built successfully"
@@ -236,6 +236,14 @@ if [ $# -gt 0 ]; then
             download_cargo_generator
             generate_cargo_sources
             ;;
+        sources)
+            download_cargo_generator
+            generate_cargo_sources
+            ;;
+        manifest)
+            VERSION=$(get_version)
+            update_manifest "$VERSION"
+            ;;
         build)
             build_flatpak
             ;;
@@ -261,14 +269,16 @@ if [ $# -gt 0 ]; then
             install_flatpak
             ;;
         -h|--help)
-            echo "Usage: $0 [setup|build|test|install|update|full]"
+            echo "Usage: $0 [setup|sources|manifest|build|test|install|update|full]"
             echo ""
             echo "Commands:"
             echo "  setup     Install dependencies and generate sources"
+            echo "  sources   Regenerate Cargo dependency sources only"
+            echo "  manifest  Update manifest with current version"
             echo "  build     Build Flatpak"
             echo "  test      Test Flatpak"
             echo "  install   Install Flatpak locally"
-            echo "  update    Update manifest with current version"
+            echo "  update    Alias for manifest"
             echo "  full      Complete pipeline"
             exit 0
             ;;

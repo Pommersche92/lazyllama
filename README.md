@@ -16,12 +16,43 @@
 
 ## 🚀 Installation
 
-### Prerequisites
+### From crates.io (Recommended)
+
+```bash
+cargo install lazyllama
+```
+
+### Arch Linux (AUR)
+
+```bash
+# Source build
+yay -S lazyllama
+
+# Pre-built binary
+yay -S lazyllama-bin
+```
+
+### Flatpak (All Linux Distributions)
+
+```bash
+flatpak install flathub app.pommersche.LazyLlama
+flatpak run app.pommersche.LazyLlama
+```
+
+### Windows
+
+Download the latest Windows x64 ZIP from [GitHub Releases](https://github.com/Pommersche92/lazyllama/releases) and extract it to a directory in your PATH.
+
+**Note:** Ollama must be installed and running separately. Visit [ollama.com](https://ollama.com/) for installation instructions.
+
+### Build from Source
+
+#### Prerequisites
 
 * [Rust](https://rustup.rs/) (Stable)
 * [Ollama](https://ollama.com/) (must be running in the background)
 
-### Build from Source
+#### Steps
 
 1. Clone the repository:
 
@@ -30,7 +61,7 @@
    cd lazyllama
    ```
 
-1. Install it system-wide:
+2. Install it system-wide:
 
    ```bash
    cargo install --path .

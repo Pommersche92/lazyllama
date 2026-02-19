@@ -32,9 +32,11 @@ git push
 This will:
 - ✅ Run tests
 - ✅ Publish to crates.io
-- ✅ Build release binary
-- ✅ Create GitHub release with tarball
+- ✅ Build release binaries (Linux x64, Windows x64)
+- ✅ Create Flatpak bundle
+- ✅ Create GitHub release with all assets
 - ✅ Deploy to AUR (lazyllama + lazyllama-bin)
+- ✅ Update Flatpak manifest for Flathub
 
 ### Individual Steps
 
@@ -67,37 +69,48 @@ cargo publish
 ./scripts/release.sh --skip-crates # Skip crates.io (already published)
 ./scripts/release.sh --skip-github # Skip GitHub release
 ./scripts/release.sh --skip-aur   # Skip AUR deployment
+./scripts/release.sh --skip-flatpak # Skip Flatpak update
 ```
 
 **What it does:**
 1. Runs `cargo test --all-features`
 2. Publishes to crates.io (with confirmation)
-3. Builds release binary
-4. Creates tarball with binary, LICENSE, and README
-5. Creates GitHub release
-6. Updates and pushes AUR packages (with confirmation)
+3. Builds Linux x64 release binary
+4. Cross-compiles Windows x64 binary (if mingw-w64 available)
+5. Creates Flatpak bundle
+6. Creates GitHub release with Linux tarball, Windows ZIP, and Flatpak bundle
+7. Updates and pushes AUR packages (with confirmation)
+8. Updates Flatpak manifest for Flathub submission (with confirmation)
 
 **Requirements:**
 - Logged in to cargo: `cargo login`
 - GitHub CLI authenticated: `gh auth login`
 - AUR repositories cloned (see `aur/README.md`)
+- For Windows builds: `sudo pacman -S mingw-w64-gcc`
+- For Flatpak: `sudo pacman -S flatpak flatpak-builder python-tomlkit python-aiohttp python-yaml`
 
 ---
 
 ### release-github.sh - GitHub Release
 
-**Creates GitHub release with pre-built binary tarball.**
+**Creates GitHub release with pre-built binaries (Linux x64, Windows x64, Flatpak).**
 
 ```bash
 ./scripts/release-github.sh                                    # Normal release
 ./scripts/release-github.sh --draft                           # Draft release
 ./scripts/release-github.sh --notes "Bug fixes"               # With notes
 ./scripts/release-github.sh --skip-build                      # Use existing binary
+./scripts/release-github.sh --skip-windows                    # Skip Windows build
+./scripts/release-github.sh --skip-flatpak                    # Skip Flatpak bundle
 ```
 
 **What it does:**
 1. Reads version from `Cargo.toml`
-2. Builds release binary (`cargo build --release`)
+2. Builds Linux x64 release binary (`cargo build --release`)
+3. Cross-compiles Windows x64 binary (`cargo build --target x86_64-pc-windows-gnu`)
+4. Builds Flatpak bundle (`flatpak build-bundle`)
+5. Creates tarballs/ZIPs with binaries, LICENSE, and README
+6. Uploads all assets to GitHub release
 3. Creates tarball: `lazyllama-VERSION-x86_64.tar.gz`
    - Contains: binary, LICENSE, README.md
 4. Creates GitHub release with tag `vVERSION`

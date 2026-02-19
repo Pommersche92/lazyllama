@@ -137,7 +137,12 @@ update_flathub() {
     # Update files
     log_info "Updating Flatpak files..."
     
-    "${PROJECT_ROOT}/scripts/build-flatpak.sh" update
+    # Regenerate dependencies
+    log_info "Regenerating Cargo dependencies..."
+    "${PROJECT_ROOT}/scripts/build-flatpak.sh" sources
+    
+    # Update manifest version
+    "${PROJECT_ROOT}/scripts/build-flatpak.sh" manifest
     
     cp "${FLATPAK_DIR}/app.pommersche.LazyLlama.json" .
     cp "${FLATPAK_DIR}/app.pommersche.LazyLlama.metainfo.xml" .

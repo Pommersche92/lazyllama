@@ -29,6 +29,7 @@ DRAFT_MODE=false
 SKIP_CRATES=false
 SKIP_GITHUB=false
 SKIP_AUR=false
+SKIP_FLATPAK=false
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -48,16 +49,21 @@ while [[ $# -gt 0 ]]; do
             SKIP_AUR=true
             shift
             ;;
+        --skip-flatpak)
+            SKIP_FLATPAK=true
+            shift
+            ;;
         -h|--help)
             echo "Usage: $0 [OPTIONS]"
             echo ""
-            echo "Complete release pipeline: crates.io → GitHub → AUR"
+            echo "Complete release pipeline: crates.io → GitHub → AUR → Flatpak"
             echo ""
             echo "Options:"
             echo "  --draft              Create GitHub release as draft"
             echo "  --skip-crates        Skip crates.io publish"
             echo "  --skip-github        Skip GitHub release"
             echo "  --skip-aur           Skip AUR deployment"
+            echo "  --skip-flatpak       Skip Flatpak manifest update"
             echo "  -h, --help          Show this help message"
             echo ""
             echo "Examples:"
@@ -201,6 +207,26 @@ deploy_aur() {
     fi
 }
 
+# Update Flatpak manifest
+update_flatpak() {
+    log_step "Updating Flatpak manifest..."
+    echo ""
+    
+    if ! confirm "Update Flatpak manifest and metainfo?"; then
+        log_warning "Skipping Flatpak update"
+        return 0
+    fi
+    
+    if "${PROJECT_ROOT}/scripts/deploy-flathub.sh" update; then
+        log_success "Flatpak manifest updated"
+        log_info "Remember to push changes to flathub repository"
+        return 0
+    else
+        log_error "Failed to update Flatpak"
+        return 1
+    fi
+}
+
 # Display final summary
 display_summary() {
     separator
@@ -223,6 +249,7 @@ display_summary() {
         else
             echo "   https://github.com/Pommersche92/lazyllama/releases/tag/v$VERSION"
         fi
+        echo "   Assets: Linux x64, Windows x64, Flatpak bundle"
         echo ""
     fi
     
@@ -233,10 +260,18 @@ display_summary() {
         echo ""
     fi
     
+    if [ "$SKIP_FLATPAK" = false ]; then
+        echo -e "${BOLD}📦 Flatpak:${NC}"
+        echo "   Manifest updated in flathub-repo/"
+        echo "   Remember to push to Flathub repository"
+        echo ""
+    fi
+    
     echo -e "${BOLD}Installation:${NC}"
     echo "   cargo install lazyllama"
     echo "   yay -S lazyllama"
     echo "   yay -S lazyllama-bin"
+    echo "   flatpak install flathub app.pommersche.LazyLlama"
     echo ""
 }
 
@@ -261,10 +296,12 @@ main() {
     echo ""
     [ "$SKIP_CRATES" = false ] && echo "  1. ✓ Publish to crates.io"
     [ "$SKIP_CRATES" = true ] && echo "  1. ✗ Skip crates.io"
-    [ "$SKIP_GITHUB" = false ] && echo "  2. ✓ Create GitHub release"
+    [ "$SKIP_GITHUB" = false ] && echo "  2. ✓ Create GitHub release (Linux x64, Windows x64, Flatpak)"
     [ "$SKIP_GITHUB" = true ] && echo "  2. ✗ Skip GitHub release"
     [ "$SKIP_AUR" = false ] && echo "  3. ✓ Deploy to AUR"
     [ "$SKIP_AUR" = true ] && echo "  3. ✗ Skip AUR"
+    [ "$SKIP_FLATPAK" = false ] && echo "  4. ✓ Update Flatpak manifest"
+    [ "$SKIP_FLATPAK" = true ] && echo "  4. ✗ Skip Flatpak"
     echo ""
     
     separator
@@ -296,6 +333,14 @@ main() {
     # Step 3: Deploy to AUR
     if [ "$SKIP_AUR" = false ]; then
         if ! deploy_aur; then
+            exit 1
+        fi
+        separator
+    fi
+    
+    # Step 4: Update Flatpak
+    if [ "$SKIP_FLATPAK" = false ]; then
+        if ! update_flatpak; then
             exit 1
         fi
         separator
