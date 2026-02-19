@@ -63,19 +63,19 @@ done
 
 # Helper functions
 log_info() {
-    echo -e "${BLUE}ℹ${NC} $1"
+    echo -e "${BLUE}ℹ${NC} $1" >&2
 }
 
 log_success() {
-    echo -e "${GREEN}✓${NC} $1"
+    echo -e "${GREEN}✓${NC} $1" >&2
 }
 
 log_warning() {
-    echo -e "${YELLOW}⚠${NC} $1"
+    echo -e "${YELLOW}⚠${NC} $1" >&2
 }
 
 log_error() {
-    echo -e "${RED}✗${NC} $1"
+    echo -e "${RED}✗${NC} $1" >&2
 }
 
 # Extract version from Cargo.toml
@@ -195,30 +195,27 @@ create_github_release() {
     
     log_info "Creating GitHub release $tag..."
     
-    # Build gh release create command
-    local gh_cmd="gh release create $tag"
+    # Build command arguments array
+    local gh_args=(
+        "release" "create" "$tag"
+        "$tarball_path"
+        "--title" "LazyLlama v${version}"
+    )
     
-    # Add tarball
-    gh_cmd="$gh_cmd $tarball_path"
-    
-    # Add title
-    gh_cmd="$gh_cmd --title \"LazyLlama v${version}\""
-    
-    # Add notes if provided
+    # Add notes
     if [ -n "$RELEASE_NOTES" ]; then
-        gh_cmd="$gh_cmd --notes \"$RELEASE_NOTES\""
+        gh_args+=("--notes" "$RELEASE_NOTES")
     else
-        # Generate default notes
-        gh_cmd="$gh_cmd --notes \"Release v${version}\""
+        gh_args+=("--notes" "Release v${version}")
     fi
     
     # Add draft flag if requested
     if [ "$DRAFT_MODE" = true ]; then
-        gh_cmd="$gh_cmd --draft"
+        gh_args+=("--draft")
     fi
     
     # Execute command
-    if eval "$gh_cmd"; then
+    if gh "${gh_args[@]}"; then
         log_success "GitHub release created successfully"
         
         if [ "$DRAFT_MODE" = true ]; then

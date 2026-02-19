@@ -4,11 +4,13 @@ Automation scripts for releasing LazyLlama to multiple platforms.
 
 ## 📋 Overview
 
-Three scripts handle the complete release pipeline:
+Five scripts handle the complete release pipeline:
 
 1. **`release.sh`** - Complete pipeline (recommended)
 2. **`release-github.sh`** - GitHub release only
 3. **`deploy-aur.sh`** - AUR deployment only
+4. **`build-flatpak.sh`** - Build and test Flatpak
+5. **`deploy-flathub.sh`** - Deploy to Flathub
 
 ## 🚀 Quick Start
 
@@ -47,6 +49,10 @@ cargo publish
 
 # 3. Deploy to AUR
 ./scripts/deploy-aur.sh --push
+
+# 4. Build and deploy Flatpak
+./scripts/build-flatpak.sh full
+./scripts/deploy-flathub.sh update
 ```
 
 ## 📖 Script Details
@@ -300,6 +306,31 @@ git push
 # Update only binary package
 ./scripts/deploy-aur.sh --package lazyllama-bin --push
 ```
+
+### Build and Test Flatpak
+
+```bash
+# Quick build and test
+./scripts/build-flatpak.sh full
+
+# Or step-by-step
+./scripts/build-flatpak.sh setup     # Setup dependencies
+./scripts/build-flatpak.sh build     # Build Flatpak
+./scripts/build-flatpak.sh test      # Test locally
+./scripts/build-flatpak.sh install   # Install for testing
+```
+
+### Update Flatpak on Flathub
+
+```bash
+# First time submission
+./scripts/deploy-flathub.sh submit
+
+# Update existing package
+./scripts/deploy-flathub.sh update
+```
+
+**Note:** See [flatpak/README.md](../flatpak/README.md) for detailed Flatpak documentation.
 
 ## 📚 Resources
 

@@ -50,19 +50,19 @@ done
 
 # Helper functions
 log_info() {
-    echo -e "${BLUE}ℹ${NC} $1"
+    echo -e "${BLUE}ℹ${NC} $1" >&2
 }
 
 log_success() {
-    echo -e "${GREEN}✓${NC} $1"
+    echo -e "${GREEN}✓${NC} $1" >&2
 }
 
 log_warning() {
-    echo -e "${YELLOW}⚠${NC} $1"
+    echo -e "${YELLOW}⚠${NC} $1" >&2
 }
 
 log_error() {
-    echo -e "${RED}✗${NC} $1"
+    echo -e "${RED}✗${NC} $1" >&2
 }
 
 # Extract version from Cargo.toml
@@ -159,6 +159,7 @@ push_to_aur() {
     local pkg_dir="$1"
     local pkg_name=$(basename "$pkg_dir")
     local version="$2"
+    local aur_repo_dir="${pkg_dir}/aur-repo"
     
     log_info "Pushing $pkg_name to AUR..."
     
@@ -167,25 +168,36 @@ push_to_aur() {
     # Generate .SRCINFO
     makepkg --printsrcinfo > .SRCINFO
     
-    # Check if AUR remote exists
-    if [ -d .git ]; then
-        log_info "Git repository exists, updating..."
+    # Check if AUR repository exists
+    if [ -d "$aur_repo_dir/.git" ]; then
+        log_info "Copying files to AUR repository..."
+        cp PKGBUILD .SRCINFO "$aur_repo_dir/"
+        
+        cd "$aur_repo_dir"
+        
+        # Check if there are changes
+        if git diff --quiet PKGBUILD .SRCINFO 2>/dev/null; then
+            log_warning "No changes detected, skipping push"
+            return 0
+        fi
+        
+        log_info "Committing and pushing to AUR..."
         git add PKGBUILD .SRCINFO
         git commit -m "Update to version $version"
         git push
         log_success "Pushed $pkg_name to AUR"
     else
-        log_warning "No git repository found in $pkg_dir"
+        log_warning "No git repository found in $aur_repo_dir"
         log_info "To set up AUR repository:"
-        echo ""
-        echo "  cd $pkg_dir"
-        echo "  git clone ssh://aur@aur.archlinux.org/${pkg_name}.git aur-repo"
-        echo "  cp PKGBUILD .SRCINFO aur-repo/"
-        echo "  cd aur-repo"
-        echo "  git add PKGBUILD .SRCINFO"
-        echo "  git commit -m 'Update to version $version'"
-        echo "  git push"
-        echo ""
+        echo "" >&2
+        echo "  cd $pkg_dir" >&2
+        echo "  git clone ssh://aur@aur.archlinux.org/${pkg_name}.git aur-repo" >&2
+        echo "  cp PKGBUILD .SRCINFO aur-repo/" >&2
+        echo "  cd aur-repo" >&2
+        echo "  git add PKGBUILD .SRCINFO" >&2
+        echo "  git commit -m 'Initial commit: version $version'" >&2
+        echo "  git push" >&2
+        echo "" >&2
     fi
 }
 

@@ -12,7 +12,7 @@ arch=('x86_64')
 provides=('lazyllama')
 conflicts=('lazyllama')
 source=("https://github.com/Pommersche92/lazyllama/releases/download/v$pkgver/lazyllama-$pkgver-x86_64.tar.gz")
-sha256sums=('SKIP')  # Will be updated by deploy script
+sha256sums=('425d06ef6fdd1331d31c2e535775a6d7308e7fd31f9ed01dff4a3bf69bd0fdb6')
 
 package() {
     install -Dm755 lazyllama "$pkgdir/usr/bin/lazyllama"

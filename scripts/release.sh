@@ -75,29 +75,29 @@ done
 
 # Helper functions
 log_info() {
-    echo -e "${BLUE}ℹ${NC} $1"
+    echo -e "${BLUE}ℹ${NC} $1" >&2
 }
 
 log_success() {
-    echo -e "${GREEN}✓${NC} $1"
+    echo -e "${GREEN}✓${NC} $1" >&2
 }
 
 log_warning() {
-    echo -e "${YELLOW}⚠${NC} $1"
+    echo -e "${YELLOW}⚠${NC} $1" >&2
 }
 
 log_error() {
-    echo -e "${RED}✗${NC} $1"
+    echo -e "${RED}✗${NC} $1" >&2
 }
 
 log_step() {
-    echo -e "${CYAN}${BOLD}▶ $1${NC}"
+    echo -e "${CYAN}${BOLD}▶ $1${NC}" >&2
 }
 
 separator() {
-    echo ""
-    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-    echo ""
+    echo "" >&2
+    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}" >&2
+    echo "" >&2
 }
 
 # Extract version from Cargo.toml
@@ -108,7 +108,7 @@ get_version() {
 # Confirm action
 confirm() {
     local prompt="$1"
-    echo -e -n "${YELLOW}❓${NC} $prompt (y/N): "
+    echo -e -n "${YELLOW}❓${NC} $prompt (y/N): " >&2
     read -r response
     case "$response" in
         [yY][eE][sS]|[yY]) 

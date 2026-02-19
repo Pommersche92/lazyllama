@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=LazyLlama
+GenericName=Ollama TUI Client
+Comment=Lightweight TUI client for Ollama with markdown support
+Icon=app.pommersche.LazyLlama
+Exec=lazyllama
+Terminal=true
+Categories=Development;Utility;ConsoleOnly;
+Keywords=ollama;ai;llm;tui;terminal;chat;
+StartupNotify=false
