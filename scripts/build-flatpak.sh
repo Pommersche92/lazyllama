@@ -99,9 +99,37 @@ download_cargo_generator() {
     log_success "Downloaded cargo generator"
 }
 
+# Install Python dependencies for cargo generator
+install_python_dependencies() {
+    log_info "Checking Python dependencies..."
+    
+    # Check if dependencies are already installed
+    if python3 -c "import tomlkit, aiohttp, yaml" 2>/dev/null; then
+        log_success "Python dependencies already installed"
+        return 0
+    fi
+    
+    log_warning "Missing Python dependencies for flatpak-cargo-generator"
+    log_info "Please install them with:"
+    echo ""
+    echo "  sudo pacman -S python-tomlkit python-aiohttp python-yaml"
+    echo ""
+    log_info "Or create a virtual environment:"
+    echo ""
+    echo "  python -m venv flatpak/.venv"
+    echo "  source flatpak/.venv/bin/activate"
+    echo "  pip install tomlkit aiohttp PyYAML"
+    echo ""
+    
+    return 1
+}
+
 # Generate cargo sources
 generate_cargo_sources() {
     log_info "Generating Cargo dependencies..."
+    
+    # Ensure Python dependencies are installed
+    install_python_dependencies || return 1
     
     cd "$FLATPAK_DIR"
     

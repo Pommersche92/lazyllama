@@ -37,7 +37,7 @@
         {
           "type": "archive",
           "url": "https://github.com/Pommersche92/lazyllama/archive/refs/tags/v0.4.1.tar.gz",
-          "sha256": "PLACEHOLDER_REPLACE_WITH_SCRIPT"
+          "sha256": "49884d55e75fd2c675452fb7726ed029915ef36ebad27fda93dcd7892187d742"
         },
         {
           "type": "file",

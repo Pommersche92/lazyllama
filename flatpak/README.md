@@ -17,13 +17,15 @@ flatpak run app.pommersche.LazyLlama
 
 ```bash
 # Arch Linux
-sudo pacman -S flatpak flatpak-builder python
+sudo pacman -S flatpak flatpak-builder python python-tomlkit python-aiohttp python-yaml
 
 # Ubuntu/Debian
-sudo apt install flatpak flatpak-builder python3
+sudo apt install flatpak flatpak-builder python3 python3-pip
+pip3 install tomlkit aiohttp PyYAML
 
 # Fedora
-sudo dnf install flatpak flatpak-builder python3
+sudo dnf install flatpak flatpak-builder python3 python3-pip
+pip3 install tomlkit aiohttp PyYAML
 ```
 
 ### Quick Start
