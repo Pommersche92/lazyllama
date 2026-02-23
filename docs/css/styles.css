@@ -91,8 +91,8 @@
 html {
   scroll-behavior: smooth;
   font-size: 16px;
-  overflow-x: hidden;
   width: 100%;
+  overflow-x: hidden;
 }
 
 body {
@@ -101,9 +101,10 @@ body {
   color: var(--color-text-primary);
   background-color: var(--color-bg-primary);
   transition: background-color 0.3s ease, color 0.3s ease;
-  overflow-x: hidden;
   width: 100%;
   position: relative;
+  overflow-x: hidden;
+  min-height: 100vh;
 }
 
 /* Typography */
@@ -650,6 +651,7 @@ a:hover {
 /* Sections */
 section {
   padding: 6rem 0;
+  overflow-x: hidden;
 }
 
 .section-header {
@@ -891,6 +893,7 @@ section {
   gap: 2rem;
   margin-bottom: 3rem;
   align-items: flex-start;
+  overflow: hidden;
 }
 
 .step-number {
@@ -909,6 +912,8 @@ section {
 
 .step-content {
   flex: 1;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .step-content h3 {
@@ -925,6 +930,7 @@ section {
   overflow-y: hidden;
   max-width: 100%;
   width: 100%;
+  min-width: 0;
   box-sizing: border-box;
   -webkit-overflow-scrolling: touch;
 }
@@ -1057,6 +1063,95 @@ kbd {
 }
 
 .link-card:hover .link-arrow {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* Downloads Section */
+.downloads {
+  padding: 6rem 0;
+  background: linear-gradient(180deg, var(--color-bg-secondary) 0%, var(--color-bg-primary) 100%);
+}
+
+.downloads-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+}
+
+.download-card {
+  display: flex;
+  flex-direction: column;
+  padding: 2.5rem 2rem;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: 1rem;
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.3s ease;
+  position: relative;
+  box-shadow: var(--shadow);
+}
+
+.download-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--color-primary);
+}
+
+.download-icon {
+  font-size: 3rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.download-card h3 {
+  margin-bottom: 0.75rem;
+  color: var(--color-text-primary);
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.download-card p {
+  color: var(--color-text-secondary);
+  margin-bottom: 1.5rem;
+  flex-grow: 1;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.download-meta {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+}
+
+.platform-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}
+
+.download-arrow {
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
+  font-size: 1.5rem;
+  color: var(--color-primary);
+  opacity: 0;
+  transform: translateX(-10px);
+  transition: all 0.3s ease;
+}
+
+.download-card:hover .download-arrow {
   opacity: 1;
   transform: translateX(0);
 }
@@ -1351,6 +1446,7 @@ kbd {
     padding: 4rem 0;
     width: 100%;
     max-width: 100%;
+    overflow-x: hidden;
   }
   
   .hero {
@@ -1419,6 +1515,18 @@ kbd {
   
   .terminal-preview {
     max-width: 100%;
+  }
+  
+  /* Reduce minmax for grids on very small screens */
+  .controls-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .features-grid,
+  .performance-grid,
+  .links-grid,
+  .downloads-grid {
+    grid-template-columns: 1fr;
   }
 }
 

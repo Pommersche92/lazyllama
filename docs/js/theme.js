@@ -24,6 +24,9 @@ class ThemeManager {
     
     // Update theme toggle icon
     this.updateThemeIcon();
+    
+    // Update images for initial theme
+    this.updateThemeAwareImages();
   }
 
   getStoredTheme() {
@@ -47,6 +50,7 @@ class ThemeManager {
     document.documentElement.setAttribute('data-theme', theme);
     this.currentTheme = theme;
     this.storeTheme(theme);
+    this.updateThemeAwareImages();
   }
 
   getNextTheme() {
@@ -190,6 +194,7 @@ class ThemeManager {
       // Only update if currently in auto mode
       if (this.currentTheme === 'auto') {
         this.updateThemeIcon();
+        this.updateThemeAwareImages();
         this.announceThemeChange();
       }
     };
@@ -202,6 +207,94 @@ class ThemeManager {
     else if (mediaQuery.addListener) {
       mediaQuery.addListener(handleSystemThemeChange);
     }
+  }
+
+  /**
+   * Updates images based on current theme
+   * Automatically switches to -darkmode suffixed images when available in dark mode
+   */
+  updateThemeAwareImages() {
+    const effectiveTheme = this.getEffectiveTheme();
+    const isDarkMode = effectiveTheme === 'dark';
+    
+    // Find all images with data-theme-aware attribute
+    const themeAwareImages = document.querySelectorAll('img[data-theme-aware]');
+    
+    themeAwareImages.forEach(img => {
+      const originalSrc = img.getAttribute('data-original-src') || img.src;
+      
+      // Store original src if not already stored
+      if (!img.hasAttribute('data-original-src')) {
+        img.setAttribute('data-original-src', originalSrc);
+      }
+      
+      if (isDarkMode) {
+        // Try to construct dark mode path
+        const darkModeSrc = this.getDarkModePath(originalSrc);
+        
+        // Check if dark mode version exists (cache the result)
+        this.checkImageExists(darkModeSrc).then(exists => {
+          if (exists && this.getEffectiveTheme() === 'dark') {
+            img.src = darkModeSrc;
+          }
+        });
+      } else {
+        // Use original/light mode image
+        img.src = originalSrc;
+      }
+    });
+  }
+
+  /**
+   * Converts a regular image path to its dark mode equivalent
+   * Example: images/github.svg -> images/github-darkmode.svg
+   */
+  getDarkModePath(path) {
+    const lastDotIndex = path.lastIndexOf('.');
+    if (lastDotIndex === -1) return path;
+    
+    const basePath = path.substring(0, lastDotIndex);
+    const extension = path.substring(lastDotIndex);
+    
+    // Check if already has -darkmode suffix
+    if (basePath.endsWith('-darkmode')) {
+      return path;
+    }
+    
+    return `${basePath}-darkmode${extension}`;
+  }
+
+  /**
+   * Checks if an image exists at the given path
+   * Uses a cache to avoid repeated checks
+   */
+  checkImageExists(imageSrc) {
+    // Initialize cache if it doesn't exist
+    if (!this.imageExistsCache) {
+      this.imageExistsCache = new Map();
+    }
+    
+    // Check cache first
+    if (this.imageExistsCache.has(imageSrc)) {
+      return Promise.resolve(this.imageExistsCache.get(imageSrc));
+    }
+    
+    // Create a new image to test loading
+    return new Promise((resolve) => {
+      const img = new Image();
+      
+      img.onload = () => {
+        this.imageExistsCache.set(imageSrc, true);
+        resolve(true);
+      };
+      
+      img.onerror = () => {
+        this.imageExistsCache.set(imageSrc, false);
+        resolve(false);
+      };
+      
+      img.src = imageSrc;
+    });
   }
 
   announceThemeChange() {

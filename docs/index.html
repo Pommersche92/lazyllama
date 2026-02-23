@@ -47,6 +47,8 @@
                 <a href="#features" class="nav-link">Features</a>
                 <a href="#performance" class="nav-link">Performance</a>
                 <a href="#installation" class="nav-link">Installation</a>
+                <a href="#downloads" class="nav-link">Downloads</a>
+                <a href="#controls" class="nav-link">Controls</a>
                 <a href="#links" class="nav-link">Links</a>
                 
                 <!-- Desktop: Buttons -->
@@ -128,29 +130,19 @@
                     with real-time streaming, markdown support, and smart scrolling.
                 </p>
                 <div class="hero-actions">
-                    <a href="https://github.com/Pommersche92/lazyllama" target="_blank" rel="noopener" class="btn btn-primary">
-                        <span class="btn-icon"><img style="width:20px" src="images/github.svg" alt="GitHub"></span>
+                    <a href="https://github.com/Pommersche92/lazyllama" target="_blank" rel="noopener" class="btn btn-primary" style="width:50%; justify-content: center;">
+                        <span class="btn-icon"><img style="width:20px" src="images/github.svg" alt="GitHub" data-theme-aware></span>
                         View on GitHub
                     </a>
-                    <a href="https://crates.io/crates/lazyllama" target="_blank" rel="noopener" class="btn btn-secondary">
-                        <span class="btn-icon"><img style="width:20px" src="images/crates-io.png" alt="Crates.io"></span>
+                    <a href="https://crates.io/crates/lazyllama" target="_blank" rel="noopener" class="btn btn-secondary" style="width:50%; justify-content: center;">
+                        <span class="btn-icon"><img style="width:20px" src="images/crates-io.png" alt="Crates.io" data-theme-aware></span>
                         Get from Crates.io
                     </a>
                 </div>
-                <div class="hero-actions">
-                    <a href="https://github.com/Pommersche92/lazyllama/releases" target="_blank" rel="noopener" class="btn btn-secondary">
-                        <span class="btn-icon"><img style="width:20px" src="images/appimage.svg" alt="AppImage"></span>
-                        Download AppImage
-                    </a>
-                    <a href="https://aur.archlinux.org/packages/lazyllama" target="_blank" rel="noopener" class="btn btn-secondary">
-                        <span class="btn-icon"><img style="width:20px" src="images/archlinux.svg" alt="Arch Linux"></span>
-                        Install from AUR
-                    </a>
-                </div>
-                <div class="hero-actions">
-                    <a href="https://github.com/Pommersche92/lazyllama/releases" target="_blank" rel="noopener" class="btn btn-secondary">
-                        <span class="btn-icon"><img style="width:20px" src="images/windows.svg" alt="Windows"></span>
-                        Download for Windows
+                <div class="hero-actions" style="margin-top: 1rem;">
+                    <a href="#downloads" class="btn btn-primary" style="width: 100%; justify-content: center;">
+                        <span class="btn-icon">📥</span>
+                        Download LazyLlama
                     </a>
                 </div>
                 <div class="version-info">
@@ -414,8 +406,84 @@ cargo install --path .</code></pre>
         </div>
     </section>
 
+    <!-- Downloads Section -->
+    <section id="downloads" class="downloads">
+        <div class="container">
+            <div class="section-header">
+                <h2>📥 Alternate download options</h2>
+                <p>Choose your preferred installation method</p>
+            </div>
+            <div class="downloads-grid">
+                <!--<a href="https://github.com/Pommersche92/lazyllama/releases" target="_blank" rel="noopener" class="download-card">
+                    <div class="download-icon">
+                        <img style="width:48px" src="images/appimage.svg" alt="AppImage" data-theme-aware>
+                    </div>
+                    <h3>AppImage</h3>
+                    <p>Universal Linux package that runs on any distribution</p>
+                    <div class="download-meta">
+                        <span class="platform-badge">Linux</span>
+                    </div>
+                    <span class="download-arrow">→</span>
+                </a>-->
+                <a href="https://aur.archlinux.org/packages/lazyllama" target="_blank" rel="noopener" class="download-card">
+                    <div class="download-icon">
+                        <img style="width:48px" src="images/archlinux.svg" alt="Arch Linux" data-theme-aware>
+                    </div>
+                    <h3>Arch User Repository</h3>
+                    <p>Install directly from AUR using your favorite AUR helper</p>
+                    <div class="download-meta">
+                        <span class="platform-badge">Arch Linux</span>
+                    </div>
+                    <span class="download-arrow">→</span>
+                </a>
+                <!--<a href="https://github.com/Pommersche92/lazyllama/releases" target="_blank" rel="noopener" class="download-card">
+                    <div class="download-icon">
+                        <img style="width:48px" src="images/windows.svg" alt="Windows" data-theme-aware>
+                    </div>
+                    <h3>Windows Installer</h3>
+                    <p>Pre-built binary for Windows 10/11</p>
+                    <div class="download-meta">
+                        <span class="platform-badge">Windows</span>
+                    </div>
+                    <span class="download-arrow">→</span>
+                </a>
+                <a href="https://flathub.org/apps/app.pommersche.LazyLlama" target="_blank" rel="noopener" class="download-card">
+                    <div class="download-icon">📦</div>
+                    <h3>Flatpak</h3>
+                    <p>Sandboxed application for Linux via Flathub</p>
+                    <div class="download-meta">
+                        <span class="platform-badge">Linux</span>
+                    </div>
+                    <span class="download-arrow">→</span>
+                </a>-->
+                <a href="https://crates.io/crates/lazyllama" target="_blank" rel="noopener" class="download-card">
+                    <div class="download-icon">
+                        <img style="width:48px" src="images/crates-io.png" alt="Crates.io" data-theme-aware>
+                    </div>
+                    <h3>Cargo Install</h3>
+                    <p>Build from source using Rust's package manager</p>
+                    <div class="download-meta">
+                        <span class="platform-badge">Cross-platform</span>
+                    </div>
+                    <span class="download-arrow">→</span>
+                </a>
+                <a href="https://github.com/Pommersche92/lazyllama" target="_blank" rel="noopener" class="download-card">
+                    <div class="download-icon">
+                        <img style="width:48px" src="images/github.svg" alt="GitHub" data-theme-aware>
+                    </div>
+                    <h3>Build from Source</h3>
+                    <p>Clone the repository and build it yourself</p>
+                    <div class="download-meta">
+                        <span class="platform-badge">Cross-platform</span>
+                    </div>
+                    <span class="download-arrow">→</span>
+                </a>
+            </div>
+        </div>
+    </section>
+
     <!-- Controls Section -->
-    <section class="controls">
+    <section id="controls" class="controls">
         <div class="container">
             <div class="section-header">
                 <h2>⌨️ Keyboard Controls</h2>
@@ -429,35 +497,92 @@ cargo install --path .</code></pre>
                         <span>Send message / Re-activate Autoscroll</span>
                     </div>
                     <div class="control-item">
-                        <kbd>Ctrl+Q</kbd>
+                        <kbd>Shift</kbd> + <kbd>Enter</kbd>
+                        <span>Insert newline (multiline input)</span>
+                    </div>
+                    <div class="control-item">
+                        <kbd>Ctrl</kbd> + <kbd>Q</kbd>
                         <span>Quit application safely</span>
                     </div>
                     <div class="control-item">
-                        <kbd>Ctrl+C</kbd>
+                        <kbd>Ctrl</kbd> + <kbd>C</kbd>
                         <span>Clear chat history</span>
                     </div>
                     <div class="control-item">
-                        <kbd>Ctrl+S</kbd>
+                        <kbd>Ctrl</kbd> + <kbd>S</kbd>
                         <span>Manually toggle Autoscroll</span>
                     </div>
                 </div>
                 <div class="control-group">
-                    <h3>Navigation</h3>
+                    <h3>Clipboard Operations</h3>
                     <div class="control-item">
-                        <kbd>↑</kbd> <kbd>↓</kbd>
-                        <span>Switch between AI Models</span>
+                        <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>C</kbd>
+                        <span>Copy selected text to clipboard</span>
                     </div>
                     <div class="control-item">
-                        <kbd>PgUp</kbd> <kbd>PgDn</kbd>
+                        <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>V</kbd>
+                        <span>Paste text from clipboard</span>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <h3>Model & Navigation</h3>
+                    <div class="control-item">
+                        <kbd>Ctrl</kbd> + <kbd>↑</kbd> / <kbd>↓</kbd>
+                        <span>Switch between AI Models (loads separate buffers per model)</span>
+                    </div>
+                    <div class="control-item">
+                        <kbd>↑</kbd> / <kbd>↓</kbd>
+                        <span>Move cursor up/down between lines in multiline input</span>
+                    </div>
+                    <div class="control-item">
+                        <kbd>PgUp</kbd> / <kbd>PgDn</kbd>
                         <span>Scroll history (activates Manual Mode)</span>
                     </div>
                     <div class="control-item">
-                        <kbd>←</kbd> <kbd>→</kbd>
-                        <span>Move cursor left/right in input field</span>
+                        <kbd>←</kbd> / <kbd>→</kbd>
+                        <span>Move cursor left/right in the input field</span>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <h3>Text Selection</h3>
+                    <div class="control-item">
+                        <kbd>Shift</kbd> + <kbd>←</kbd> / <kbd>→</kbd>
+                        <span>Select text character-wise</span>
                     </div>
                     <div class="control-item">
-                        <kbd>Home</kbd> <kbd>End</kbd>
-                        <span>Jump to start/end of input line</span>
+                        <kbd>Shift</kbd> + <kbd>Home</kbd> / <kbd>End</kbd>
+                        <span>Select text to start/end of line</span>
+                    </div>
+                    <div class="control-item">
+                        <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>←</kbd> / <kbd>→</kbd>
+                        <span>Select text word-wise</span>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <h3>Advanced Editing</h3>
+                    <div class="control-item">
+                        <kbd>Home</kbd> / <kbd>End</kbd>
+                        <span>Jump to start/end of the input line</span>
+                    </div>
+                    <div class="control-item">
+                        <kbd>Ctrl</kbd> + <kbd>←</kbd> / <kbd>→</kbd>
+                        <span>Move cursor word-wise</span>
+                    </div>
+                    <div class="control-item">
+                        <kbd>Backspace</kbd>
+                        <span>Delete character before the cursor</span>
+                    </div>
+                    <div class="control-item">
+                        <kbd>Delete</kbd>
+                        <span>Delete character after the cursor</span>
+                    </div>
+                    <div class="control-item">
+                        <kbd>Ctrl</kbd> + <kbd>Backspace</kbd>
+                        <span>Delete previous word</span>
+                    </div>
+                    <div class="control-item">
+                        <kbd>Ctrl</kbd> + <kbd>Delete</kbd>
+                        <span>Delete next word</span>
                     </div>
                 </div>
             </div>
