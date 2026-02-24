@@ -165,6 +165,38 @@ This project is licensed under the **GPL-2.0-or-later**. See the [LICENSE](LICEN
 
 ## 📝 Changelog
 
+### v0.5.0 - February 2026
+
+* **📦 GitHub Releases**: Automated release pipeline with pre-built binaries for multiple platforms
+  * Linux x64 tarballs for easy installation on any distribution
+  * Windows x64 ZIP archives with native binaries
+  * AppImage packages for universal Linux compatibility
+* **🐧 AppImage Support**: Portable single-file executables that run on any Linux distribution
+  * No installation required - just download and run
+  * Includes all dependencies in a self-contained package
+* **🪟 Windows Binary Distribution**: Official Windows builds available through GitHub Releases
+  * Pre-compiled executables for x64 architecture
+  * No Rust toolchain required for Windows users
+* **📦 AUR Packages**: Official Arch Linux User Repository packages
+  * `lazyllama`: Build from source via crates.io
+  * `lazyllama-bin`: Pre-built binary package for faster installation
+* **🌐 Website Redesign**: Complete overhaul of project website with modern glassmorphism design
+  * Responsive layout optimized for all devices
+  * Custom typography with Satoshi font
+  * Interactive code examples and installation guides
+* **🤖 Automated Build Pipeline**: Comprehensive release automation scripts
+  * One-command release workflow to all platforms
+  * Automatic version management and checksums
+  * Integrated testing before deployment
+* **📚 Documentation Improvements**: Enhanced documentation across the project
+  * Detailed build script documentation in `scripts/README.md`
+  * Comprehensive testing guide in `TESTING.md`
+  * Updated installation instructions for all platforms
+* **🔧 Build Infrastructure**: New AppImage build system replacing Flatpak
+  * Simplified build process with `linuxdeploy`
+  * Faster compilation and smaller package size
+  * Better integration with GitHub release workflow
+
 ### v0.4.1 - February 2026
 
 * **🔼 Extended Input Height**: Input field now expands up to 5 lines (increased from 4)
