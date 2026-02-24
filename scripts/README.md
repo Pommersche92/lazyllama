@@ -10,6 +10,7 @@ Four scripts handle the complete release pipeline:
 2. **`release-github.sh`** - GitHub release only
 3. **`deploy-aur.sh`** - AUR deployment only
 4. **`build-appimage.sh`** - Build AppImage
+5. **`submit-appimagehub.sh`** - Prepare AppImageHub submission
 
 ## 🚀 Quick Start
 
@@ -324,6 +325,25 @@ git push
 # Clean build directory
 ./scripts/build-appimage.sh clean
 ```
+
+### Submit to AppImageHub
+
+**Prepares files for AppImageHub submission.**
+
+```bash
+./scripts/submit-appimagehub.sh
+```
+
+**What it does:**
+1. Creates AppImageHub recipe file (`lazyllama.yml`)
+2. Generates AppData metadata for better presentation
+3. Provides step-by-step instructions for submission
+
+**Requirements:**
+- GitHub release with AppImage must exist first
+- Fork of https://github.com/AppImage/appimage.github.io
+
+**Note:** AppImageHub uses a pull request workflow. The script prepares files and shows instructions - you need to manually create the PR.
 
 ## 📚 Resources
 

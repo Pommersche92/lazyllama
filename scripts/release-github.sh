@@ -186,8 +186,8 @@ build_appimage() {
     
     cd "$PROJECT_ROOT"
     
-    # Run AppImage build script
-    if "${PROJECT_ROOT}/scripts/build-appimage.sh" build; then
+    # Run AppImage build script (redirect output to stderr to keep stdout clean)
+    if "${PROJECT_ROOT}/scripts/build-appimage.sh" build >&2; then
         # The script outputs the path to the AppImage
         local version=$(get_version)
         local appimage_name="lazyllama-${version}-x86_64.AppImage"
@@ -295,7 +295,7 @@ create_windows_zip() {
     
     # Create ZIP
     cd "$temp_dir"
-    if zip -r "$zip_path" *; then
+    if zip -q -r "$zip_path" *; then
         log_success "ZIP created: $zip_name"
         
         # Calculate and display SHA256
@@ -477,6 +477,8 @@ main() {
     echo "  1. Verify the release on GitHub"
     echo "  2. Update AUR packages:"
     echo "     ./scripts/deploy-aur.sh --push"
+    echo "  3. Submit to AppImageHub (optional):"
+    echo "     ./scripts/submit-appimagehub.sh"
     echo ""
 }
 

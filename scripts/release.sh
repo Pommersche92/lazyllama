@@ -240,6 +240,11 @@ display_summary() {
     echo "   yay -S lazyllama"
     echo "   yay -S lazyllama-bin"
     echo ""
+    
+    echo -e "${BOLD}📝 Optional Next Steps:${NC}"
+    echo "   Submit to AppImageHub for wider distribution:"
+    echo "     ./scripts/submit-appimagehub.sh"
+    echo ""
 }
 
 # Main execution

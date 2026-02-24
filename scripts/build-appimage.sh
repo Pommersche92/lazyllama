@@ -145,7 +145,15 @@ EOF
     if [ -f "${PROJECT_ROOT}/docs/images/logo.png" ]; then
         cp "${PROJECT_ROOT}/docs/images/logo.png" "${APPDIR}/usr/share/icons/hicolor/256x256/apps/${package_name}.png"
     else
-        log_warning "No icon found, AppImage will have default icon"
+        log_warning "No icon found, creating simple placeholder icon"
+        # Create a simple 256x256 PNG icon using ImageMagick or skip if not available
+        if command -v convert &> /dev/null; then
+            convert -size 256x256 xc:transparent -fill '#3498db' -draw "circle 128,128 128,16" \
+                    -fill white -pointsize 120 -gravity center -annotate +0+10 "🦙" \
+                    "${APPDIR}/usr/share/icons/hicolor/256x256/apps/${package_name}.png" 2>/dev/null || \
+            convert -size 256x256 xc:'#3498db' -fill white -pointsize 80 -gravity center -annotate +0+0 "LL" \
+                    "${APPDIR}/usr/share/icons/hicolor/256x256/apps/${package_name}.png"
+        fi
     fi
     
     # Create AppRun
@@ -188,15 +196,15 @@ build_appimage() {
     export ARCH=x86_64
     export VERSION="$version"
     export OUTPUT="$output_path"
+    export NO_STRIP=1  # Disable stripping to avoid issues with newer binaries
     
-    # Run linuxdeploy
-    if ./linuxdeploy-x86_64.AppImage --appdir "$APPDIR" --output appimage; then
-        # linuxdeploy creates the AppImage in the current directory
-        # Find the created AppImage and move it to the correct location
-        local created_appimage=$(find . -maxdepth 1 -name "*.AppImage" -type f | head -n1)
-        
-        if [ -n "$created_appimage" ]; then
-            mv "$created_appimage" "$output_path"
+    log_info "Running linuxdeploy (this may take a moment)..."
+    
+    # Run linuxdeploy with verbose output
+    if ./linuxdeploy-x86_64.AppImage --appdir "$APPDIR" --output appimage 2>&1 | tee linuxdeploy.log; then
+        # linuxdeploy creates the AppImage at $OUTPUT location
+        # Check if it was created successfully
+        if [ -f "$output_path" ]; then
             chmod +x "$output_path"
             log_success "AppImage created: $output_name"
             
@@ -207,11 +215,29 @@ build_appimage() {
             echo "$output_path"
             return 0
         else
-            log_error "AppImage file not found after build"
-            return 1
+            # Fallback: check if it was created in current directory
+            local created_appimage=$(find . -maxdepth 1 -name "*.AppImage" -type f | head -n1)
+            
+            if [ -n "$created_appimage" ]; then
+                mv "$created_appimage" "$output_path"
+                chmod +x "$output_path"
+                log_success "AppImage created: $output_name"
+                
+                # Calculate SHA256
+                local checksum=$(sha256sum "$output_path" | awk '{print $1}')
+                log_info "SHA256: $checksum"
+                
+                echo "$output_path"
+                return 0
+            else
+                log_error "AppImage file not found after build"
+                log_info "Check linuxdeploy.log for details"
+                return 1
+            fi
         fi
     else
         log_error "Failed to build AppImage"
+        log_info "Check linuxdeploy.log for details"
         return 1
     fi
 }
