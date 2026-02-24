@@ -4,13 +4,12 @@ Automation scripts for releasing LazyLlama to multiple platforms.
 
 ## 📋 Overview
 
-Five scripts handle the complete release pipeline:
+Four scripts handle the complete release pipeline:
 
 1. **`release.sh`** - Complete pipeline (recommended)
 2. **`release-github.sh`** - GitHub release only
 3. **`deploy-aur.sh`** - AUR deployment only
-4. **`build-flatpak.sh`** - Build and test Flatpak
-5. **`deploy-flathub.sh`** - Deploy to Flathub
+4. **`build-appimage.sh`** - Build AppImage
 
 ## 🚀 Quick Start
 
@@ -33,10 +32,9 @@ This will:
 - ✅ Run tests
 - ✅ Publish to crates.io
 - ✅ Build release binaries (Linux x64, Windows x64)
-- ✅ Create Flatpak bundle
+- ✅ Create AppImage
 - ✅ Create GitHub release with all assets
 - ✅ Deploy to AUR (lazyllama + lazyllama-bin)
-- ✅ Update Flatpak manifest for Flathub
 
 ### Individual Steps
 
@@ -52,9 +50,8 @@ cargo publish
 # 3. Deploy to AUR
 ./scripts/deploy-aur.sh --push
 
-# 4. Build and deploy Flatpak
-./scripts/build-flatpak.sh full
-./scripts/deploy-flathub.sh update
+# 4. Build AppImage
+./scripts/build-appimage.sh build
 ```
 
 ## 📖 Script Details
@@ -69,7 +66,6 @@ cargo publish
 ./scripts/release.sh --skip-crates # Skip crates.io (already published)
 ./scripts/release.sh --skip-github # Skip GitHub release
 ./scripts/release.sh --skip-aur   # Skip AUR deployment
-./scripts/release.sh --skip-flatpak # Skip Flatpak update
 ```
 
 **What it does:**
@@ -77,23 +73,22 @@ cargo publish
 2. Publishes to crates.io (with confirmation)
 3. Builds Linux x64 release binary
 4. Cross-compiles Windows x64 binary (if mingw-w64 available)
-5. Creates Flatpak bundle
-6. Creates GitHub release with Linux tarball, Windows ZIP, and Flatpak bundle
+5. Creates AppImage
+6. Creates GitHub release with Linux tarball, Windows ZIP, and AppImage
 7. Updates and pushes AUR packages (with confirmation)
-8. Updates Flatpak manifest for Flathub submission (with confirmation)
 
 **Requirements:**
 - Logged in to cargo: `cargo login`
 - GitHub CLI authenticated: `gh auth login`
 - AUR repositories cloned (see `aur/README.md`)
 - For Windows builds: `sudo pacman -S mingw-w64-gcc`
-- For Flatpak: `sudo pacman -S flatpak flatpak-builder python-tomlkit python-aiohttp python-yaml`
+- For AppImage: `sudo pacman -S patchelf wget`
 
 ---
 
 ### release-github.sh - GitHub Release
 
-**Creates GitHub release with pre-built binaries (Linux x64, Windows x64, Flatpak).**
+**Creates GitHub release with pre-built binaries (Linux x64, Windows x64, AppImage).**
 
 ```bash
 ./scripts/release-github.sh                                    # Normal release
@@ -101,14 +96,14 @@ cargo publish
 ./scripts/release-github.sh --notes "Bug fixes"               # With notes
 ./scripts/release-github.sh --skip-build                      # Use existing binary
 ./scripts/release-github.sh --skip-windows                    # Skip Windows build
-./scripts/release-github.sh --skip-flatpak                    # Skip Flatpak bundle
+./scripts/release-github.sh --skip-appimage                   # Skip AppImage creation
 ```
 
 **What it does:**
 1. Reads version from `Cargo.toml`
 2. Builds Linux x64 release binary (`cargo build --release`)
 3. Cross-compiles Windows x64 binary (`cargo build --target x86_64-pc-windows-gnu`)
-4. Builds Flatpak bundle (`flatpak build-bundle`)
+4. Builds AppImage
 5. Creates tarballs/ZIPs with binaries, LICENSE, and README
 6. Uploads all assets to GitHub release
 3. Creates tarball: `lazyllama-VERSION-x86_64.tar.gz`
@@ -320,30 +315,15 @@ git push
 ./scripts/deploy-aur.sh --package lazyllama-bin --push
 ```
 
-### Build and Test Flatpak
+### Build AppImage
 
 ```bash
-# Quick build and test
-./scripts/build-flatpak.sh full
+# Build AppImage
+./scripts/build-appimage.sh build
 
-# Or step-by-step
-./scripts/build-flatpak.sh setup     # Setup dependencies
-./scripts/build-flatpak.sh build     # Build Flatpak
-./scripts/build-flatpak.sh test      # Test locally
-./scripts/build-flatpak.sh install   # Install for testing
+# Clean build directory
+./scripts/build-appimage.sh clean
 ```
-
-### Update Flatpak on Flathub
-
-```bash
-# First time submission
-./scripts/deploy-flathub.sh submit
-
-# Update existing package
-./scripts/deploy-flathub.sh update
-```
-
-**Note:** See [flatpak/README.md](../flatpak/README.md) for detailed Flatpak documentation.
 
 ## 📚 Resources
 

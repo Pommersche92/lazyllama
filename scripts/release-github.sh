@@ -18,14 +18,13 @@ PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CARGO_TOML="${PROJECT_ROOT}/Cargo.toml"
 RELEASE_DIR="${PROJECT_ROOT}/target/release"
 DIST_DIR="${PROJECT_ROOT}/target/dist"
-FLATPAK_DIR="${PROJECT_ROOT}/flatpak"
 
 # Parse arguments
 DRAFT_MODE=false
 RELEASE_NOTES=""
 SKIP_BUILD=false
 SKIP_WINDOWS=false
-SKIP_FLATPAK=false
+SKIP_APPIMAGE=false
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -45,21 +44,21 @@ while [[ $# -gt 0 ]]; do
             SKIP_WINDOWS=true
             shift
             ;;
-        --skip-flatpak)
-            SKIP_FLATPAK=true
+        --skip-appimage)
+            SKIP_APPIMAGE=true
             shift
             ;;
         -h|--help)
             echo "Usage: $0 [OPTIONS]"
             echo ""
-            echo "Creates a GitHub release with pre-built binaries (Linux x64, Windows x64, Flatpak)."
+            echo "Creates a GitHub release with pre-built binaries (Linux x64, Windows x64, AppImage)."
             echo ""
             echo "Options:"
             echo "  --draft              Create as draft release"
             echo "  --notes TEXT         Release notes (optional)"
             echo "  --skip-build         Skip building, use existing binary"
             echo "  --skip-windows       Skip Windows cross-compile"
-            echo "  --skip-flatpak       Skip Flatpak bundle creation"
+            echo "  --skip-appimage      Skip AppImage creation"
             echo "  -h, --help          Show this help message"
             echo ""
             echo "Example:"
@@ -181,37 +180,29 @@ build_windows() {
 }
 
 # Build Flatpak bundle
-build_flatpak_bundle() {
-    log_info "Building Flatpak bundle..."
+# Build AppImage
+build_appimage() {
+    log_info "Building AppImage..."
     
     cd "$PROJECT_ROOT"
     
-    # Check if flatpak-builder is installed
-    if ! command -v flatpak-builder &> /dev/null; then
-        log_warning "flatpak-builder not found"
-        log_info "Install with: sudo pacman -S flatpak-builder"
-        return 1
-    fi
-    
-    # Run flatpak build script
-    if ! "${PROJECT_ROOT}/scripts/build-flatpak.sh" build; then
-        log_error "Failed to build Flatpak"
-        return 1
-    fi
-    
-    # Create bundle
-    local version=$(get_version)
-    local bundle_name="lazyllama-${version}-x86_64.flatpak"
-    local bundle_path="${DIST_DIR}/${bundle_name}"
-    
-    mkdir -p "$DIST_DIR"
-    
-    if flatpak build-bundle flatpak-repo "$bundle_path" app.pommersche.LazyLlama; then
-        log_success "Flatpak bundle created: $bundle_name"
-        echo "$bundle_path"
-        return 0
+    # Run AppImage build script
+    if "${PROJECT_ROOT}/scripts/build-appimage.sh" build; then
+        # The script outputs the path to the AppImage
+        local version=$(get_version)
+        local appimage_name="lazyllama-${version}-x86_64.AppImage"
+        local appimage_path="${DIST_DIR}/${appimage_name}"
+        
+        if [ -f "$appimage_path" ]; then
+            log_success "AppImage created: $appimage_name"
+            echo "$appimage_path"
+            return 0
+        else
+            log_error "AppImage not found at expected path"
+            return 1
+        fi
     else
-        log_error "Failed to create Flatpak bundle"
+        log_error "Failed to build AppImage"
         return 1
     fi
 }
@@ -458,17 +449,17 @@ main() {
         echo ""
     fi
     
-    # Build Flatpak bundle
-    if [ "$SKIP_FLATPAK" = false ]; then
-        FLATPAK_BUNDLE=$(build_flatpak_bundle)
+    # Build AppImage
+    if [ "$SKIP_APPIMAGE" = false ]; then
+        APPIMAGE=$(build_appimage)
         if [ $? -ne 0 ]; then
-            log_warning "Skipping Flatpak bundle (build failed)"
+            log_warning "Skipping AppImage (build failed)"
         else
-            release_assets+=("$FLATPAK_BUNDLE")
+            release_assets+=("$APPIMAGE")
         fi
         echo ""
     else
-        log_warning "Skipping Flatpak build (--skip-flatpak)"
+        log_warning "Skipping AppImage build (--skip-appimage)"
         echo ""
     fi
     
@@ -486,8 +477,6 @@ main() {
     echo "  1. Verify the release on GitHub"
     echo "  2. Update AUR packages:"
     echo "     ./scripts/deploy-aur.sh --push"
-    echo "  3. Update Flatpak manifest:"
-    echo "     ./scripts/deploy-flathub.sh update"
     echo ""
 }
 
