@@ -140,20 +140,22 @@ LazyLlama is optimized for ultra-low latency with all operations completing well
 
 | Category | Operation | Avg. Time | Performance |
 | ---------- | ----------- | ----------- | ------------- |
-| **String Operations** | Character Insertion | 323 ns | ⚡ |
-| | Unicode Insertion (🦀) | 126 ns | ⚡⚡ |
-| | Pattern Matching | 7.45 µs | ✅ |
-| **Text Parsing** | History Parsing | 2.10 µs | ⚡ |
-| | Line Iteration | 9.06 µs | ✅ |
-| | Character Counting | 203 ns | ⚡⚡ |
+| **String Operations** | Character Insertion | 384 ns | ⚡⚡ |
+| | Unicode Insertion (🦀) | 163 ns | ⚡⚡ |
+| | Pattern Matching | 7.55 µs | ⚡ |
+| **Text Parsing** | History Parsing | 2.11 µs | ⚡ |
+| | Line Iteration | 7.23 µs | ⚡ |
+| | Character Counting | 206 ns | ⚡⚡ |
 | **Cursor Operations** | Index Conversion | 1 ns | ⚡⚡⚡ |
-| | Word Boundary Detection | 4.28 µs | ⚡ |
-| **Memory** | HashMap Lookups | 6.79 µs | ✅ |
-| | Vec Pre-allocation | 586 ns | ⚡⚡ |
-| **Real-World** | Large History (100KB) | 64.3 µs | ✅ |
-| | Model Switching | 12.7 µs | ✅ |
+| | Word Boundary Detection | 2.81 µs | ⚡ |
+| **Memory** | HashMap Lookups | 6.97 µs | ⚡ |
+| | Vec Pre-allocation | 576 ns | ⚡⚡ |
+| **Real-World** | Large History (100KB) | 66.2 µs | ✅ |
+| | Model Switching | 13.0 µs | ✅ |
 
 **Legend**: ⚡⚡⚡ < 10 ns | ⚡⚡ < 1 µs | ⚡ < 10 µs | ✅ < 100 µs
+
+*Benchmark results from 2 March 2026 · Release build · `cargo test --release --benches`*
 
 All benchmarks run on optimized release builds. Run `cargo test --release --benches` to execute the full benchmark suite.
 
@@ -164,6 +166,13 @@ For detailed testing information, test structure, and maintenance guidelines, se
 This project is licensed under the **GPL-2.0-or-later**. See the [LICENSE](LICENSE) file for details.
 
 ## 📝 Changelog
+
+### v0.5.1 - March 2026
+
+* **🐛 Scroll Fix**: Correctly calculate visual scroll height when `Wrap` is active
+  * `total_lines` is now computed as the sum of wrapped visual rows per logical line
+  * Fixes issue where the scroll area ended too early after multiple messages, making the last responses unreachable
+  * Auto-scroll now reliably positions at the true bottom of the conversation
 
 ### v0.5.0 - February 2026
 

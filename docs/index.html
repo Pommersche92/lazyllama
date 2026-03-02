@@ -146,7 +146,7 @@
                     </a>
                 </div>
                 <div class="version-info">
-                    <span class="version-badge">v0.4.1</span>
+                    <span class="version-badge">v0.5.1</span>
                     <span class="separator">•</span>
                     <span class="license">GPL-2.0-or-later</span>
                 </div>
@@ -167,7 +167,7 @@
                             <span class="command">lazyllama</span>
                         </div>
                         <div class="terminal-line">
-                            <span class="output">🦙 LazyLlama v0.4.1 - Starting...</span>
+                            <span class="output">🦙 LazyLlama v0.5.1 - Starting...</span>
                         </div>
                         <div class="terminal-line">
                             <span class="output">📡 Connected to Ollama</span>
@@ -263,18 +263,18 @@
                         <div class="performance-metrics">
                             <div class="metric-item">
                                 <span class="metric-label">Character Insertion</span>
-                                <span class="metric-value">323 ns</span>
-                                <span class="metric-badge fast">⚡</span>
+                                <span class="metric-value">384 ns</span>
+                                <span class="metric-badge ultra-fast">⚡⚡</span>
                             </div>
                             <div class="metric-item">
                                 <span class="metric-label">Unicode Handling (🦀)</span>
-                                <span class="metric-value">126 ns</span>
+                                <span class="metric-value">163 ns</span>
                                 <span class="metric-badge ultra-fast">⚡⚡</span>
                             </div>
                             <div class="metric-item">
                                 <span class="metric-label">Pattern Search</span>
-                                <span class="metric-value">7.45 µs</span>
-                                <span class="metric-badge good">✅</span>
+                                <span class="metric-value">7.55 µs</span>
+                                <span class="metric-badge fast">⚡</span>
                             </div>
                         </div>
                     </div>
@@ -283,17 +283,17 @@
                         <div class="performance-metrics">
                             <div class="metric-item">
                                 <span class="metric-label">History Parsing</span>
-                                <span class="metric-value">2.10 µs</span>
+                                <span class="metric-value">2.11 µs</span>
                                 <span class="metric-badge fast">⚡</span>
                             </div>
                             <div class="metric-item">
                                 <span class="metric-label">Line Iteration</span>
-                                <span class="metric-value">9.06 µs</span>
-                                <span class="metric-badge good">✅</span>
+                                <span class="metric-value">7.23 µs</span>
+                                <span class="metric-badge fast">⚡</span>
                             </div>
                             <div class="metric-item">
                                 <span class="metric-label">Character Counting</span>
-                                <span class="metric-value">203 ns</span>
+                                <span class="metric-value">206 ns</span>
                                 <span class="metric-badge ultra-fast">⚡⚡</span>
                             </div>
                         </div>
@@ -308,7 +308,7 @@
                             </div>
                             <div class="metric-item">
                                 <span class="metric-label">Word Boundary</span>
-                                <span class="metric-value">4.28 µs</span>
+                                <span class="metric-value">2.81 µs</span>
                                 <span class="metric-badge fast">⚡</span>
                             </div>
                         </div>
@@ -318,18 +318,18 @@
                         <div class="performance-metrics">
                             <div class="metric-item">
                                 <span class="metric-label">100KB History</span>
-                                <span class="metric-value">64.3 µs</span>
+                                <span class="metric-value">66.2 µs</span>
                                 <span class="metric-badge good">✅</span>
                             </div>
                             <div class="metric-item">
                                 <span class="metric-label">Model Switching</span>
-                                <span class="metric-value">12.7 µs</span>
+                                <span class="metric-value">13.0 µs</span>
                                 <span class="metric-badge good">✅</span>
                             </div>
                             <div class="metric-item">
                                 <span class="metric-label">HashMap Lookups</span>
-                                <span class="metric-value">6.79 µs</span>
-                                <span class="metric-badge good">✅</span>
+                                <span class="metric-value">6.97 µs</span>
+                                <span class="metric-badge fast">⚡</span>
                             </div>
                         </div>
                     </div>
@@ -357,6 +357,7 @@
                 </div>
                 <div class="performance-note">
                     <p><strong>Note:</strong> All benchmarks are measured on optimized release builds. Unicode operations are actually faster than ASCII due to efficient UTF-8 handling in Rust. Run <code>cargo test --release --benches</code> to execute the full benchmark suite yourself.</p>
+                    <p class="benchmark-date"><em>Last measured: 2 March 2026 &middot; Release build &middot; <code>cargo test --release --benches</code></em></p>
                 </div>
             </div>
         </div>
