@@ -184,7 +184,34 @@ pub fn ui(f: &mut Frame, app: &mut App) {
     // Verlauf parsen und Scrollen berechnen
     let history_text = parse_history(&app.history);
     let visible_height = chat_chunks[0].height.saturating_sub(2);
-    let total_lines = history_text.height() as u16;
+    // The inner width of the chat panel (minus the two border columns).
+    let visible_width = chat_chunks[0].width.saturating_sub(2) as usize;
+
+    // `Text::height()` only counts logical lines.  When `Wrap` is active,
+    // every line whose display width exceeds `visible_width` occupies
+    // *multiple* visual rows.  Using the raw logical count makes `max_scroll`
+    // too small so the bottom of the history is unreachable.
+    // We therefore sum up the wrapped row count for every logical line.
+    let total_lines: u16 = if visible_width == 0 {
+        history_text.height() as u16
+    } else {
+        history_text
+            .lines
+            .iter()
+            .map(|line| {
+                let line_width: usize = line
+                    .spans
+                    .iter()
+                    .map(|s| s.content.chars().count())
+                    .sum();
+                if line_width == 0 {
+                    1u16
+                } else {
+                    ((line_width + visible_width - 1) / visible_width) as u16
+                }
+            })
+            .sum()
+    };
 
     if app.autoscroll {
         app.scroll = total_lines.saturating_sub(visible_height);
