@@ -1,4 +1,7 @@
-# 🦙 LazyLlama
+<div align="center">
+  <img src="icon.png" alt="LazyLlama icon" width="128" /><br><br>
+  <h1>LazyLlama</h1>
+</div>
 
 **LazyLlama** is a lightweight, fast Terminal User Interface (TUI) client for [Ollama](https://ollama.com/). It is designed for running local AI models with minimal overhead and intuitive, Emacs-inspired controls directly in your terminal.
 
@@ -166,6 +169,20 @@ For detailed testing information, test structure, and maintenance guidelines, se
 This project is licensed under the **GPL-2.0-or-later**. See the [LICENSE](LICENSE) file for details.
 
 ## 📝 Changelog
+
+### v0.5.2 - April 2026
+
+* **🎨 Windows Icon Embedding**: Application icon now properly embedded in Windows executables
+  * Added `build.rs` to compile icon resources into `.exe` files
+  * Icons display correctly in Windows Explorer and taskbar
+  * Automatic generation of `icon.ico` from `icon.png` during build process
+* **🖼️ AppImage Icon Integration**: Improved icon handling for AppImage packages
+  * Uses project root `icon.png` for all AppImage builds
+  * Fallback to generated placeholder if icon is missing
+  * Better visual identification in application launchers
+* **🔧 Build Infrastructure**: Enhanced release scripts with icon generation
+  * Automatic `.ico` conversion using ImageMagick before Windows cross-compilation
+  * Streamlined icon workflow across all distribution formats
 
 ### v0.5.1 - March 2026
 

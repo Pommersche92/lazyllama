@@ -153,6 +153,20 @@ build_windows() {
     
     cd "$PROJECT_ROOT"
     
+    # Generate .ico from icon.png (project root) so build.rs can embed it into the exe
+    if [ -f "icon.png" ] && [ ! -f "icon.ico" ]; then
+        if command -v convert &> /dev/null; then
+            log_info "Generating icon.ico from icon.png..."
+            convert icon.png -define icon:auto-resize=256,128,64,48,32,16 icon.ico
+        elif command -v magick &> /dev/null; then
+            log_info "Generating icon.ico from icon.png..."
+            magick icon.png -define icon:auto-resize=256,128,64,48,32,16 icon.ico
+        else
+            log_warning "ImageMagick not found — Windows exe will have no custom icon"
+            log_warning "Install with: sudo pacman -S imagemagick"
+        fi
+    fi
+    
     # Check if target is installed
     if ! rustup target list --installed | grep -q x86_64-pc-windows-gnu; then
         log_info "Installing Windows target..."

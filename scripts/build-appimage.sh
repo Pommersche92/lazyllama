@@ -139,21 +139,22 @@ Categories=Utility;ConsoleOnly;
 Terminal=true
 EOF
     
-    # Create a simple icon (PNG) - placeholder
-    # For a real icon, you would copy an actual icon file
-    # For now, we'll skip the icon or use a simple placeholder
-    if [ -f "${PROJECT_ROOT}/docs/images/logo.png" ]; then
-        cp "${PROJECT_ROOT}/docs/images/logo.png" "${APPDIR}/usr/share/icons/hicolor/256x256/apps/${package_name}.png"
+    # Icon — use icon.png from project root
+    local icon_src="${PROJECT_ROOT}/icon.png"
+    if [ -f "$icon_src" ]; then
+        cp "$icon_src" "${APPDIR}/usr/share/icons/hicolor/256x256/apps/${package_name}.png"
+        log_info "Using icon: icon.png"
+    elif command -v convert &> /dev/null; then
+        log_warning "icon.png not found, generating placeholder with ImageMagick"
+        convert -size 256x256 xc:'#3498db' \
+            -fill white -font DejaVu-Sans-Bold -pointsize 80 \
+            -gravity center -annotate 0 'LL' \
+            "${APPDIR}/usr/share/icons/hicolor/256x256/apps/${package_name}.png"
     else
-        log_warning "No icon found, creating simple placeholder icon"
-        # Create a simple 256x256 PNG icon using ImageMagick or skip if not available
-        if command -v convert &> /dev/null; then
-            convert -size 256x256 xc:transparent -fill '#3498db' -draw "circle 128,128 128,16" \
-                    -fill white -pointsize 120 -gravity center -annotate +0+10 "🦙" \
-                    "${APPDIR}/usr/share/icons/hicolor/256x256/apps/${package_name}.png" 2>/dev/null || \
-            convert -size 256x256 xc:'#3498db' -fill white -pointsize 80 -gravity center -annotate +0+0 "LL" \
-                    "${APPDIR}/usr/share/icons/hicolor/256x256/apps/${package_name}.png"
-        fi
+        log_warning "No icon found and ImageMagick not available; AppImage may lack icon"
+        # Create minimal 1x1 PNG as fallback
+        printf '\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x02\x00\x00\x00\x90wS\xde\x00\x00\x00\x0cIDATx\x9cc\xf8\x0f\x00\x00\x01\x01\x00\x05\x18\xd8N\x00\x00\x00\x00IEND\xaeB`\x82' \
+            > "${APPDIR}/usr/share/icons/hicolor/256x256/apps/${package_name}.png"
     fi
     
     # Create AppRun
