@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🦙 LazyLlama - Lightweight TUI Client for Ollama</title>
+    <title>LazyLlama - Lightweight TUI Client for Ollama</title>
     <meta name="description" content="LazyLlama is a fast, lightweight Terminal User Interface (TUI) client for Ollama with real-time streaming, markdown support, and smart scrolling.">
     <meta name="keywords" content="ollama, tui, ai, llama, terminal, rust, cli">
     <meta name="author" content="Raimo Geisel">
@@ -35,8 +35,8 @@
     <nav class="navbar" role="navigation">
         <div class="nav-container">
             <div class="nav-brand">
-                <!--<img src="images/lazyllama-logo.svg" alt="LazyLlama Logo" class="nav-logo-svg">-->
-                🦙 <span class="nav-title">LazyLlama</span>
+                <img src="images/logo.png" alt="LazyLlama Logo" class="nav-logo-svg">
+                <span class="nav-title">LazyLlama</span>
             </div>
             <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Toggle navigation menu" aria-expanded="false">
                 <span class="hamburger-line"></span>
@@ -121,13 +121,13 @@
                     <span>Fast • Lightweight • Terminal</span>
                 </div>
                 <h1 class="hero-title">
-                    <!--<img src="images/lazyllama-logo.svg" alt="LazyLlama" class="hero-logo-svg">-->
-                    🦙 <span class="gradient-text">LazyLlama</span>
+                    <img src="images/logo.png" alt="LazyLlama" class="hero-logo-svg">
+                    <span class="gradient-text">LazyLlama</span>
                 </h1>
                 <p class="hero-subtitle">
                     A blazing fast Terminal User Interface (TUI) client for 
                     <a href="https://ollama.com/" target="_blank" rel="noopener">Ollama</a>
-                    with real-time streaming, markdown support, and smart scrolling.
+                    with real-time streaming, GitHub-flavored markdown, syntax highlighting, and smart scrolling.
                 </p>
                 <div class="hero-actions">
                     <a href="https://github.com/Pommersche92/lazyllama" target="_blank" rel="noopener" class="btn btn-primary" style="width:50%; justify-content: center;">
@@ -146,7 +146,7 @@
                     </a>
                 </div>
                 <div class="version-info">
-                    <span class="version-badge">v0.5.1</span>
+                    <span class="version-badge">v0.5.2</span>
                     <span class="separator">•</span>
                     <span class="license">GPL-2.0-or-later</span>
                 </div>
@@ -167,7 +167,7 @@
                             <span class="command">lazyllama</span>
                         </div>
                         <div class="terminal-line">
-                            <span class="output">🦙 LazyLlama v0.5.1 - Starting...</span>
+                            <span class="output">🦙 LazyLlama v0.5.2 - Starting...</span>
                         </div>
                         <div class="terminal-line">
                             <span class="output">📡 Connected to Ollama</span>
@@ -208,9 +208,14 @@
                     <p>Responses are generated live, providing immediate feedback without waiting for complete generation.</p>
                 </div>
                 <div class="feature-card">
+                    <div class="feature-icon">📝</div>
+                    <h3>GitHub-Flavored Markdown</h3>
+                    <p>Feature-complete markdown rendering with bold, italic, strikethrough, inline code, headers (all 6 levels), ordered/unordered lists, task lists (☐/☑), blockquotes, horizontal rules, and clickable links.</p>
+                </div>
+                <div class="feature-card">
                     <div class="feature-icon">🎨</div>
-                    <h3>Markdown Support</h3>
-                    <p>Automatic formatting for headers, lists, bold text, and syntax-highlighted code blocks with custom borders.</p>
+                    <h3>Syntax Highlighting</h3>
+                    <p>Professional-grade code highlighting for 100+ languages (Rust, Python, JavaScript, TypeScript, Go, C++, Java, and more) with 10 customizable themes optimized for both dark and light terminal backgrounds.</p>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">🖱️</div>
@@ -234,6 +239,11 @@
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">⚙️</div>
+                    <h3>Customizable Settings</h3>
+                    <p>Persistent configuration with in-app settings dialog (Ctrl+O). Choose from 10 syntax highlighting themes, with more settings coming soon. Preferences are saved automatically.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">⌨️</div>
                     <h3>Emacs-inspired Controls</h3>
                     <p>Familiar keyboard shortcuts for efficient navigation and control, designed for power users.</p>
                 </div>
@@ -504,6 +514,10 @@ cargo install --path .</code></pre>
                     <div class="control-item">
                         <kbd>Ctrl</kbd> + <kbd>Q</kbd>
                         <span>Quit application safely</span>
+                    </div>
+                    <div class="control-item">
+                        <kbd>Ctrl</kbd> + <kbd>O</kbd>
+                        <span>Open settings dialog (theme selection)</span>
                     </div>
                     <div class="control-item">
                         <kbd>Ctrl</kbd> + <kbd>C</kbd>

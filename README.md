@@ -8,8 +8,8 @@
 ## ✨ Features
 
 * **Real-time Streaming:** Responses are generated live, providing immediate feedback.
-* **Markdown Support:** Automatic formatting for headers, lists, and bold text.
-* **Code Highlighting:** Syntax blocks are visually separated with custom borders and background colors.
+* **GitHub-Flavored Markdown:** Comprehensive support for markdown formatting including bold, italic, strikethrough, inline code, headers, lists, task lists, blockquotes, links, and horizontal rules.
+* **Syntax Highlighting:** Code blocks with language tags are automatically syntax-highlighted using `syntect` with support for 100+ programming languages (Rust, Python, JavaScript, TypeScript, Go, C++, Java, and many more).
 * **Smart Scrolling:** * `AUTOSCROLL`: Automatically follows the AI output.
   * `MANUAL SCROLL`: Locks the view (🔒) when you use PageUp/Down, allowing you to read previous messages undisturbed.
 * **Model Management:** Easily switch between installed Ollama models using Ctrl+arrow keys with **separate input/output buffers per model**.
@@ -77,6 +77,7 @@ Download the latest Windows x64 ZIP from [GitHub Releases](https://github.com/Po
 | `Enter` | Send message / Re-activate Autoscroll |
 | `Shift` + `Enter` | Insert newline (multiline input) |
 | `C-q` | Quit application safely |
+| `C-o` | Open settings dialog (theme selection) |
 | `C-c` | Clear chat history |
 | `C-s` | Manually toggle Autoscroll |
 | `Ctrl` + `Shift` + `C` | Copy selected text to clipboard |
@@ -98,6 +99,33 @@ Download the latest Windows x64 ZIP from [GitHub Releases](https://github.com/Po
 Optional debug:
 
 * `LAZYLLAMA_DEBUG_KEYS=1` shows key/scroll/render info in the status bar.
+
+## ⚙️ Configuration
+
+LazyLlama stores user preferences in a configuration file that persists between sessions.
+
+### Settings Dialog
+
+Press `Ctrl+O` to open the settings dialog where you can customize:
+
+* **Syntax Highlighting Theme**: Choose from 10 curated themes optimized for both dark and light terminal backgrounds
+  * **Dark themes**: Ocean Dark (default), Monokai, Solarized Dark, Dracula, Nord
+  * **Light themes**: Ocean Light, Solarized Light, GitHub, Monokai Light, Gruvbox Light
+
+Settings are automatically saved when you apply changes and will be restored on the next application start.
+
+### Config File Location
+
+Settings are stored in:
+* **Linux/macOS**: `~/.config/lazyllama/settings.toml`
+* **Windows**: `%APPDATA%\lazyllama\settings.toml`
+
+You can manually edit the config file if needed. Example:
+
+```toml
+[settings]
+syntax_theme = "SolarizedDark"
+```
 
 ## 🛠 Project Structure
 
@@ -183,6 +211,24 @@ This project is licensed under the **GPL-2.0-or-later**. See the [LICENSE](LICEN
 * **🔧 Build Infrastructure**: Enhanced release scripts with icon generation
   * Automatic `.ico` conversion using ImageMagick before Windows cross-compilation
   * Streamlined icon workflow across all distribution formats
+* **📝 GitHub-Flavored Markdown Support**: Feature-complete markdown rendering
+  * Added `pulldown-cmark` for standards-compliant markdown parsing
+  * **Inline formatting**: Bold (`**text**`), italic (`*text*`), strikethrough (`~~text~~`), inline code (`` `code` ``)
+  * **Headers**: All levels (`#` to `######`) with visual hierarchy
+  * **Lists**: Unordered (`-`, `*`, `+`) and ordered (`1.`, `2.`, etc.)
+  * **Task lists**: Unchecked (`- [ ]`) and checked (`- [x]`) items with visual indicators (☐/☑)
+  * **Blockquotes**: `> quote` with green styling and italic formatting
+  * **Horizontal rules**: `---`, `***`, `___` rendered as visual separators
+  * **Links**: `[text](url)` with blue underlined text (URL hidden in TUI)
+  * Preserves existing YOU:/AI: label coloring and code block framing
+* **🎨 Syntax Highlighting**: Language-aware code block highlighting
+  * Added `syntect` library for professional-grade syntax highlighting
+  * Supports 100+ programming languages with accurate tokenization
+  * Uses base16-ocean.dark theme optimized for terminal readability
+  * Automatically detects language from code fence tags (e.g., `` ```rust ``, `` ```python ``, `` ```js ``)
+  * Comprehensive language tag mapping: supports common aliases (js→JavaScript, py→Python, rs→Rust, cs→C#, etc.)
+  * Highlights keywords, strings, comments, functions, types, and more
+  * Preserves code block framing with language labels
 
 ### v0.5.1 - March 2026
 

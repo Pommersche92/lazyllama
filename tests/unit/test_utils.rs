@@ -276,3 +276,79 @@ fn test_full_file_creation_cycle() {
     assert!(read_result.is_ok());
     assert_eq!(read_result.unwrap(), test_history);
 }
+
+/// Tests loading settings (either from config or defaults).
+#[test]
+fn test_load_settings_default() {
+    use lazyllama::utils::load_settings;
+    
+    // Load settings - should return either saved settings or defaults
+    // The actual theme value depends on whether a config file exists
+    let settings = load_settings();
+    
+    // Just verify that settings can be loaded without error
+    // and that the theme is one of the valid options
+    let all_themes = lazyllama::app::SyntaxTheme::all();
+    assert!(all_themes.contains(&settings.syntax_theme));
+}
+
+/// Tests settings serialization and deserialization.
+#[test]
+fn test_settings_serialization() {
+    use lazyllama::app::{Settings, SyntaxTheme};
+    
+    let mut settings = Settings::default();
+    settings.syntax_theme = SyntaxTheme::SolarizedDark;
+    
+    // Serialize to TOML
+    let toml_string = toml::to_string(&settings).unwrap();
+    assert!(toml_string.contains("SolarizedDark"));
+    
+    // Deserialize back
+    let deserialized: Settings = toml::from_str(&toml_string).unwrap();
+    assert_eq!(deserialized.syntax_theme, SyntaxTheme::SolarizedDark);
+}
+
+/// Tests settings persistence cycle.
+#[test]
+fn test_settings_save_and_load_cycle() {
+    use lazyllama::app::{Settings, SyntaxTheme};
+    use lazyllama::utils::{save_settings, load_settings};
+    
+    // Create settings with non-default theme
+    let mut original_settings = Settings::default();
+    original_settings.syntax_theme = SyntaxTheme::Monokai;
+    
+    // Save settings - may fail if config dir is unavailable
+    let save_result = save_settings(&original_settings);
+    
+    if save_result.is_ok() {
+        // If save succeeded, load should return the same settings
+        let loaded_settings = load_settings();
+        assert_eq!(loaded_settings.syntax_theme, SyntaxTheme::Monokai);
+    }
+    // If save failed (e.g., in restricted CI environment), that's acceptable
+    // The important thing is that no panic occurred
+}
+
+/// Tests that all theme variants can be serialized.
+#[test]
+fn test_all_themes_serializable() {
+    use lazyllama::app::{Settings, SyntaxTheme};
+    
+    let themes = SyntaxTheme::all();
+    
+    for theme in themes {
+        let mut settings = Settings::default();
+        settings.syntax_theme = theme.clone();
+        
+        // Should serialize without error
+        let toml_result = toml::to_string(&settings);
+        assert!(toml_result.is_ok());
+        
+        // Should deserialize back to the same theme
+        let toml_string = toml_result.unwrap();
+        let deserialized: Settings = toml::from_str(&toml_string).unwrap();
+        assert_eq!(deserialized.syntax_theme, theme);
+    }
+}

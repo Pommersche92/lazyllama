@@ -36,11 +36,120 @@
 use anyhow::Result;
 use ollama_rs::{generation::completion::request::GenerationRequest, Ollama};
 use ratatui::{backend::CrosstermBackend, widgets::ListState, Terminal};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::env;
 use std::io;
 use std::time::Instant;
 use tokio_stream::StreamExt;
+
+/// Available syntax highlighting themes for code blocks.
+///
+/// This enum contains curated themes optimized for both dark and light
+/// terminal backgrounds. Each theme variant maps to a syntect theme name.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub enum SyntaxTheme {
+    // Dark themes
+    Base16OceanDark,
+    Monokai,
+    SolarizedDark,
+    Dracula,
+    Nord,
+    
+    // Light themes
+    Base16OceanLight,
+    SolarizedLight,
+    InspiredGitHub,
+    MonokaiLight,
+    GruvboxLight,
+}
+
+impl SyntaxTheme {
+    /// Returns the syntect theme name as a string.
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            SyntaxTheme::Base16OceanDark => "base16-ocean.dark",
+            SyntaxTheme::Monokai => "base16-mocha.dark",
+            SyntaxTheme::SolarizedDark => "Solarized (dark)",
+            SyntaxTheme::Dracula => "base16-twilight.dark",
+            SyntaxTheme::Nord => "base16-ocean.dark", // Nord approximation
+            SyntaxTheme::Base16OceanLight => "base16-ocean.light",
+            SyntaxTheme::SolarizedLight => "Solarized (light)",
+            SyntaxTheme::InspiredGitHub => "InspiredGitHub",
+            SyntaxTheme::MonokaiLight => "base16-mocha.light",
+            SyntaxTheme::GruvboxLight => "base16-eighties.light",
+        }
+    }
+    
+    /// Returns a user-friendly display name for the theme.
+    pub fn display_name(&self) -> &'static str {
+        match self {
+            SyntaxTheme::Base16OceanDark => "Ocean Dark",
+            SyntaxTheme::Monokai => "Monokai",
+            SyntaxTheme::SolarizedDark => "Solarized Dark",
+            SyntaxTheme::Dracula => "Dracula",
+            SyntaxTheme::Nord => "Nord",
+            SyntaxTheme::Base16OceanLight => "Ocean Light",
+            SyntaxTheme::SolarizedLight => "Solarized Light",
+            SyntaxTheme::InspiredGitHub => "GitHub",
+            SyntaxTheme::MonokaiLight => "Monokai Light",
+            SyntaxTheme::GruvboxLight => "Gruvbox Light",
+        }
+    }
+    
+    /// Returns all available themes in display order.
+    pub fn all() -> Vec<SyntaxTheme> {
+        vec![
+            // Dark themes first
+            SyntaxTheme::Base16OceanDark,
+            SyntaxTheme::Monokai,
+            SyntaxTheme::SolarizedDark,
+            SyntaxTheme::Dracula,
+            SyntaxTheme::Nord,
+            // Light themes
+            SyntaxTheme::Base16OceanLight,
+            SyntaxTheme::SolarizedLight,
+            SyntaxTheme::InspiredGitHub,
+            SyntaxTheme::MonokaiLight,
+            SyntaxTheme::GruvboxLight,
+        ]
+    }
+    
+    /// Returns whether this is a dark theme.
+    pub fn is_dark(&self) -> bool {
+        matches!(self, 
+            SyntaxTheme::Base16OceanDark |
+            SyntaxTheme::Monokai |
+            SyntaxTheme::SolarizedDark |
+            SyntaxTheme::Dracula |
+            SyntaxTheme::Nord
+        )
+    }
+}
+
+impl Default for SyntaxTheme {
+    fn default() -> Self {
+        SyntaxTheme::Base16OceanDark
+    }
+}
+
+/// Application settings that can be customized by the user.
+///
+/// These settings control the behavior and appearance of the application,
+/// particularly for syntax highlighting themes.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Settings {
+    /// Currently selected syntax highlighting theme for code blocks.
+    pub syntax_theme: SyntaxTheme,
+}
+
+impl Default for Settings {
+    fn default() -> Self {
+        Settings {
+            syntax_theme: SyntaxTheme::default(),
+        }
+    }
+}
 
 /// Main application state container for LazyLlama.
 ///
@@ -94,6 +203,12 @@ pub struct App {
     pub debug_last_key: Option<String>,
     /// Frame counter for render debugging.
     pub render_count: u64,
+    /// Application settings (themes, etc.).
+    pub settings: Settings,
+    /// Whether the settings dialog is currently visible.
+    pub show_settings_dialog: bool,
+    /// Currently selected item in the settings dialog.
+    pub settings_selection: usize,
 }
 
 impl App {
@@ -126,6 +241,10 @@ impl App {
         let debug_keys = env::var("LAZYLLAMA_DEBUG_KEYS")
             .map(|v| v != "0" && v.to_lowercase() != "false")
             .unwrap_or(false);
+        
+        // Load saved settings from config file
+        let settings = crate::utils::load_settings();
+        
         let mut app = App {
             models: Vec::new(),
             list_state: ListState::default(),
@@ -149,6 +268,9 @@ impl App {
             debug_keys,
             debug_last_key: None,
             render_count: 0,
+            settings,
+            show_settings_dialog: false,
+            settings_selection: 0,
         };
         app.refresh_models().await;
         app

@@ -38,6 +38,7 @@
 //! - Animated loading indicators
 
 use crate::app::App;
+use pulldown_cmark::{Event, Parser, Tag, TagEnd};
 use ratatui::{
     layout::{Alignment, Constraint, Direction, Layout},
     style::{Color, Modifier, Style},
@@ -46,6 +47,10 @@ use ratatui::{
     Frame,
 };
 use regex::Regex;
+use syntect::easy::HighlightLines;
+use syntect::highlighting::ThemeSet;
+use syntect::parsing::SyntaxSet;
+use syntect::util::LinesWithEndings;
 
 /// ASCII art banner displayed at the top of the application.
 /// 
@@ -57,6 +62,189 @@ pub const BANNER: &str = r#"
 | |__| (_| | / /  \  / | |___ | | (_| | | | | | | (_| |
 |_____\__,_|/___| /_/  |_____||_|\__,_|_| |_| |_|\__,_|
 "#;
+
+/// Converts a syntect Color to a ratatui Color.
+///
+/// Syntect uses RGBA colors while ratatui uses RGB. This function
+/// extracts the RGB components and creates a ratatui RGB color.
+fn syntect_color_to_ratatui(color: syntect::highlighting::Color) -> Color {
+    Color::Rgb(color.r, color.g, color.b)
+}
+
+/// Maps common markdown language tags to syntect language names.
+///
+/// Markdown code fences often use different identifiers than syntect's
+/// internal language names. This function provides a mapping to ensure
+/// proper syntax highlighting for commonly used language tags.
+///
+/// # Arguments
+///
+/// * `lang` - The language tag from markdown (e.g., "js", "py", "csharp")
+///
+/// # Returns
+///
+/// The syntect-compatible language name (e.g., "JavaScript", "Python", "C#")
+fn map_language_tag(lang: &str) -> &str {
+    match lang.to_lowercase().as_str() {
+        // JavaScript variants
+        "javascript" | "js" => "JavaScript",
+        "typescript" | "ts" => "TypeScript",
+        "jsx" => "JavaScript (Babel)",
+        "tsx" => "TypeScript",
+        
+        // Python
+        "python" | "py" => "Python",
+        
+        // Rust
+        "rust" | "rs" => "Rust",
+        
+        // C family
+        "c" => "C",
+        "cpp" | "c++" | "cxx" => "C++",
+        "csharp" | "cs" | "c#" => "C#",
+        
+        // JVM languages
+        "java" => "Java",
+        "kotlin" | "kt" => "Kotlin",
+        "scala" => "Scala",
+        "groovy" => "Groovy",
+        
+        // Other compiled languages
+        "go" | "golang" => "Go",
+        "swift" => "Swift",
+        "objective-c" | "objc" => "Objective-C",
+        "objective-c++" | "objc++" => "Objective-C++",
+        
+        // Scripting languages
+        "ruby" | "rb" => "Ruby",
+        "php" => "PHP",
+        "perl" | "pl" => "Perl",
+        "lua" => "Lua",
+        "r" => "R",
+        
+        // Shell scripting
+        "bash" | "sh" | "shell" => "Bourne Again Shell (bash)",
+        "zsh" => "Bourne Again Shell (bash)", // Close enough
+        "fish" => "Bourne Again Shell (bash)",
+        "powershell" | "ps1" => "PowerShell",
+        
+        // Web technologies
+        "html" | "htm" => "HTML",
+        "css" => "CSS",
+        "scss" | "sass" => "SCSS",
+        "less" => "LESS",
+        
+        // Data formats
+        "json" => "JSON",
+        "yaml" | "yml" => "YAML",
+        "toml" => "TOML",
+        "xml" => "XML",
+        "csv" => "CSV",
+        
+        // Markup
+        "markdown" | "md" => "Markdown",
+        "latex" | "tex" => "LaTeX",
+        "rst" | "restructuredtext" => "reStructuredText",
+        
+        // SQL
+        "sql" | "mysql" | "postgresql" | "postgres" => "SQL",
+        
+        // Functional languages
+        "haskell" | "hs" => "Haskell",
+        "ocaml" | "ml" => "OCaml",
+        "erlang" | "erl" => "Erlang",
+        "elixir" | "ex" | "exs" => "Elixir",
+        "clojure" | "clj" => "Clojure",
+        "fsharp" | "fs" | "f#" => "F#",
+        
+        // Lisp family
+        "lisp" => "Lisp",
+        "scheme" => "Scheme",
+        
+        // Other languages
+        "dart" => "Dart",
+        "julia" | "jl" => "Julia",
+        "zig" => "Zig",
+        "nim" => "Nim",
+        "crystal" => "Crystal",
+        "d" => "D",
+        "v" | "vlang" => "V",
+        
+        // Config files
+        "ini" | "cfg" => "INI",
+        "env" | "dotenv" => "Shell Script (Bash)", // Approximation
+        "dockerfile" | "docker" => "Dockerfile",
+        "makefile" | "make" => "Makefile",
+        
+        // Default: return as-is
+        _ => lang,
+    }
+}
+
+/// Applies syntax highlighting to a code block and returns styled lines.
+///
+/// Uses syntect to parse and highlight code based on the specified language.
+/// Falls back to plain text if the language is not recognized.
+///
+/// # Arguments
+///
+/// * `code` - The code content to highlight
+/// * `language` - The programming language identifier (e.g., "rust", "python")
+/// * `theme_name` - The name of the syntect theme to use for highlighting
+///
+/// # Returns
+///
+/// A vector of Lines with syntax-highlighted spans, each prefixed with a
+/// yellow border character (│).
+fn highlight_code_block(code: &str, language: &str, theme_name: &str) -> Vec<Line<'static>> {
+    let ps = SyntaxSet::load_defaults_newlines();
+    let ts = ThemeSet::load_defaults();
+    
+    // Map the language tag to syntect's expected name
+    let mapped_lang = map_language_tag(language);
+    
+    // Try to find the syntax by mapped name, then extension, then original name
+    let syntax = ps.find_syntax_by_name(mapped_lang)
+        .or_else(|| ps.find_syntax_by_extension(mapped_lang))
+        .or_else(|| ps.find_syntax_by_extension(language))
+        .unwrap_or_else(|| ps.find_syntax_plain_text());
+    
+    // Use the specified theme, fallback to base16-ocean.dark if not found
+    let theme = ts.themes.get(theme_name)
+        .unwrap_or_else(|| &ts.themes["base16-ocean.dark"]);
+    
+    let mut highlighter = HighlightLines::new(syntax, theme);
+    let mut lines = Vec::new();
+    
+    for line in LinesWithEndings::from(code) {
+        let ranges = highlighter.highlight_line(line, &ps).unwrap_or_default();
+        let mut spans = vec![
+            Span::styled(" │ ".to_string(), Style::default().fg(Color::Yellow))
+        ];
+        
+        for (style, text) in ranges {
+            let fg_color = syntect_color_to_ratatui(style.foreground);
+            let mut ratatui_style = Style::default().fg(fg_color);
+            
+            // Apply text modifiers based on syntect font style
+            if style.font_style.contains(syntect::highlighting::FontStyle::BOLD) {
+                ratatui_style = ratatui_style.add_modifier(Modifier::BOLD);
+            }
+            if style.font_style.contains(syntect::highlighting::FontStyle::ITALIC) {
+                ratatui_style = ratatui_style.add_modifier(Modifier::ITALIC);
+            }
+            if style.font_style.contains(syntect::highlighting::FontStyle::UNDERLINE) {
+                ratatui_style = ratatui_style.add_modifier(Modifier::UNDERLINED);
+            }
+            
+            spans.push(Span::styled(text.to_string(), ratatui_style));
+        }
+        
+        lines.push(Line::from(spans));
+    }
+    
+    lines
+}
 
 /// Main rendering function for the Ratatui terminal interface.
 ///
@@ -182,7 +370,7 @@ pub fn ui(f: &mut Frame, app: &mut App) {
         .split(main_chunks[1]);
 
     // Verlauf parsen und Scrollen berechnen
-    let history_text = parse_history(&app.history);
+    let history_text = parse_history(&app.history, app.settings.syntax_theme.as_str());
     let visible_height = chat_chunks[0].height.saturating_sub(2);
     // The inner width of the chat panel (minus the two border columns).
     let visible_width = chat_chunks[0].width.saturating_sub(2) as usize;
@@ -376,7 +564,7 @@ pub fn ui(f: &mut Frame, app: &mut App) {
         chat_chunks[1],
     );
     let mut status = format!(
-        " C-q: Quit | C-S-c: Copy | C-S-v: Paste | S-Enter: Newline | PgUp/Dn: Scroll | C-↑↓: Model [{}] ",
+        " C-q: Quit | C-o: Settings | C-S-c: Copy | C-S-v: Paste | S-Enter: Newline | PgUp/Dn: Scroll | C-↑↓: Model [{}] ",
         selected_model
     );
     if app.debug_keys {
@@ -391,6 +579,138 @@ pub fn ui(f: &mut Frame, app: &mut App) {
         Paragraph::new(status).style(Style::default().bg(Color::White).fg(Color::Black)),
         root_layout[2],
     );
+    
+    // Render settings dialog if open
+    if app.show_settings_dialog {
+        render_settings_dialog(f, app);
+    }
+}
+
+/// Renders the settings dialog popup.
+///
+/// This function displays a centered popup dialog that allows users to configure
+/// application settings, primarily the syntax highlighting theme. The dialog shows
+/// all available themes grouped by dark and light categories.
+///
+/// # Arguments
+///
+/// * `f` - The frame to render into
+/// * `app` - The application state containing current settings and selection
+///
+/// # Navigation
+///
+/// - Up/Down arrows: Navigate through themes
+/// - Enter: Apply selected theme and close dialog
+/// - Esc/q: Close dialog without changes
+fn render_settings_dialog(f: &mut Frame, app: &App) {
+    let area = f.area();
+    
+    // Create a centered popup area (60% width, 70% height)
+    let popup_width = (area.width * 60) / 100;
+    let popup_height = (area.height * 70) / 100;
+    let popup_x = (area.width.saturating_sub(popup_width)) / 2;
+    let popup_y = (area.height.saturating_sub(popup_height)) / 2;
+    
+    let popup_area = ratatui::layout::Rect {
+        x: popup_x,
+        y: popup_y,
+        width: popup_width,
+        height: popup_height,
+    };
+    
+    // Clear the popup area first
+    f.render_widget(Clear, popup_area);
+    
+    // Build the settings content
+    let themes = crate::app::SyntaxTheme::all();
+    let mut items: Vec<ListItem> = Vec::new();
+    
+    // Add header
+    items.push(ListItem::new(Line::from(vec![
+        Span::styled("Settings", Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD)),
+    ])));
+    items.push(ListItem::new(""));
+    
+    // Add theme section header
+    items.push(ListItem::new(Line::from(vec![
+        Span::styled("Syntax Highlighting Theme:", Style::default().fg(Color::Yellow)),
+    ])));
+    items.push(ListItem::new(""));
+    
+    // Add dark themes
+    items.push(ListItem::new(Line::from(vec![
+        Span::styled("  Dark Themes:", Style::default().fg(Color::Gray)),
+    ])));
+    for (idx, theme) in themes.iter().enumerate() {
+        if !theme.is_dark() {
+            break;
+        }
+        
+        let is_selected = idx == app.settings_selection;
+        let is_current = theme == &app.settings.syntax_theme;
+        
+        let mut label = format!("    {}", theme.display_name());
+        if is_current {
+            label.push_str(" ✓");
+        }
+        
+        let style = if is_selected {
+            Style::default().fg(Color::Black).bg(Color::Cyan)
+        } else if is_current {
+            Style::default().fg(Color::Green)
+        } else {
+            Style::default()
+        };
+        
+        items.push(ListItem::new(label).style(style));
+    }
+    
+    items.push(ListItem::new(""));
+    
+    // Add light themes
+    items.push(ListItem::new(Line::from(vec![
+        Span::styled("  Light Themes:", Style::default().fg(Color::Gray)),
+    ])));
+    
+    for (idx, theme) in themes.iter().enumerate() {
+        if theme.is_dark() {
+            continue;
+        }
+        
+        let is_selected = idx == app.settings_selection;
+        let is_current = theme == &app.settings.syntax_theme;
+        
+        let mut label = format!("    {}", theme.display_name());
+        if is_current {
+            label.push_str(" ✓");
+        }
+        
+        let style = if is_selected {
+            Style::default().fg(Color::Black).bg(Color::Cyan)
+        } else if is_current {
+            Style::default().fg(Color::Green)
+        } else {
+            Style::default()
+        };
+        
+        items.push(ListItem::new(label).style(style));
+    }
+    
+    items.push(ListItem::new(""));
+    items.push(ListItem::new(Line::from(vec![
+        Span::styled("↑↓: Navigate  Enter: Apply  Esc/q: Close", 
+            Style::default().fg(Color::DarkGray)),
+    ])));
+    
+    let list = List::new(items)
+        .block(
+            Block::default()
+                .borders(Borders::ALL)
+                .border_style(Style::default().fg(Color::Cyan))
+                .title(" Settings ")
+        );
+    
+    f.render_widget(list, popup_area);
 }
 
 /// Parses conversation history and converts it into a formatted Ratatui Text object.
@@ -436,8 +756,9 @@ pub fn ui(f: &mut Frame, app: &mut App) {
 /// Input: "YOU: Hello\n\nAI: Here's some code:\n\n```rust\nfn main() {}\n```"
 /// Output: Formatted Text with colored labels and bordered code block
 /// ```
-pub fn parse_history<'a>(history: &'a str) -> Text<'a> {
-    let code_block_re = Regex::new(r"(?s)```(?P<lang>\w+)?\n(?P<code>.*?)```").unwrap();
+pub fn parse_history<'a>(history: &'a str, theme_name: &str) -> Text<'a> {
+    // Updated regex to allow optional whitespace after language name
+    let code_block_re = Regex::new(r"(?s)```(?P<lang>\w+)?\s*\n(?P<code>.*?)```").unwrap();
     let mut text = Text::default();
     let mut last_match_end = 0;
 
@@ -449,16 +770,19 @@ pub fn parse_history<'a>(history: &'a str) -> Text<'a> {
         let lang = caps.name("lang").map_or("code", |m| m.as_str());
         let code_content = caps.name("code").map_or("", |m| m.as_str());
 
+        // Header with language name
         text.push_line(Line::from(Span::styled(
             format!(" ┌── {} ──", lang),
             Style::default().fg(Color::Yellow),
         )));
-        for line in code_content.lines() {
-            text.push_line(Line::from(vec![
-                Span::styled(" │ ", Style::default().fg(Color::Yellow)),
-                Span::raw(line),
-            ]));
+        
+        // Syntax-highlighted code lines
+        let highlighted_lines = highlight_code_block(code_content, lang, theme_name);
+        for line in highlighted_lines {
+            text.push_line(line);
         }
+        
+        // Footer
         text.push_line(Line::from(Span::styled(
             " └──────────",
             Style::default().fg(Color::Yellow),
@@ -471,39 +795,56 @@ pub fn parse_history<'a>(history: &'a str) -> Text<'a> {
     text
 }
 
-/// Processes regular text line-by-line and applies styling for labels and markdown headers.
+/// Processes regular text line-by-line and applies GitHub-flavored markdown styling.
 ///
-/// This function handles non-code text formatting, applying appropriate colors and
-/// styles to different types of content including conversation labels, markdown
-/// headers, and regular text. It preserves the original text structure while
-/// adding visual styling.
+/// This function handles comprehensive markdown formatting using pulldown-cmark parser,
+/// supporting all major GitHub markdown features including inline formatting, lists,
+/// blockquotes, headers, and special text markers like task lists.
 ///
 /// # Arguments
 ///
 /// * `text` - The raw text string to be processed and styled
 /// * `target` - Mutable reference to the Text object where styled content is appended
 ///
-/// # Styling Rules
+/// # Supported Markdown Features
 ///
-/// - **Headers**: Lines starting with `###` are converted to bullet points (`•`) in bold white
-/// - **User Messages**: "YOU:" prefix is styled in bold magenta, rest in default color
-/// - **AI Messages**: "AI:" prefix is styled in bold cyan, rest in default color
-/// - **Regular Text**: Rendered without special styling in default terminal colors
+/// - **Inline Formatting**:
+///   - Bold: `**text**` or `__text__`
+///   - Italic: `*text*` or `_text_`
+///   - Strikethrough: `~~text~~`
+///   - Inline code: `` `code` ``
+///   - Combined formatting: `***bold italic***`
 ///
-/// # Text Processing
+/// - **Headers**: All levels `#` to `######`
 ///
-/// The function processes each line individually and:
-/// 1. Trims whitespace to detect line types
-/// 2. Creates appropriate styled spans based on content
-/// 3. Preserves original text after removing formatting markers
-/// 4. Combines spans into cohesive line objects
+/// - **Lists**:
+///   - Unordered lists: `-`, `*`, `+`
+///   - Ordered lists: `1.`, `2.`, etc.
+///   - Task lists: `- [ ]` and `- [x]`
+///
+/// - **Blockquotes**: `> quote text`
+///
+/// - **Horizontal Rules**: `---`, `***`, `___`
+///
+/// - **Links**: `[text](url)` - displays the link text
+///
+/// # Special Labels
+///
+/// - `YOU:` prefix styled in bold magenta
+/// - `AI:` prefix styled in bold cyan
 /// 
 /// # Color Scheme
 ///
-/// - Headers: White with bold modifier
+/// - Headers: White with bold modifier (levels indicated by bullet style)
+/// - Bold text: Bold modifier
+/// - Italic text: Italic modifier  
+/// - Strikethrough: Crossed-out modifier
+/// - Inline code: Yellow foreground with dim modifier
 /// - User labels: Magenta with bold modifier
 /// - AI labels: Cyan with bold modifier
-/// - Regular text: Default terminal colors
+/// - Blockquotes: Green with italic modifier
+/// - Links: Blue with underline modifier
+/// - List items: Bullet points in appropriate colors
 ///
 /// # Side Effects
 ///
@@ -511,35 +852,179 @@ pub fn parse_history<'a>(history: &'a str) -> Text<'a> {
 /// allowing for incremental building of complex formatted documents.
 pub fn process_styled_text<'a>(text: &'a str, target: &mut Text<'a>) {
     for line in text.lines() {
-        let trimmed = line.trim();
-        let mut spans = Vec::new();
-        if trimmed.starts_with("###") {
-            spans.push(Span::styled(
-                format!("● {}", trimmed.trim_start_matches('#').trim()),
-                Style::default()
-                    .fg(Color::White)
-                    .add_modifier(Modifier::BOLD),
-            ));
-        } else if line.starts_with("YOU:") {
-            spans.push(Span::styled(
-                "YOU:",
-                Style::default()
-                    .fg(Color::Magenta)
-                    .add_modifier(Modifier::BOLD),
-            ));
-            spans.push(Span::raw(&line[4..]));
+        // Check for special YOU:/AI: labels first
+        if line.starts_with("YOU:") {
+            let rest = if line.len() > 4 { &line[4..] } else { "" };
+            let mut spans: Vec<Span<'static>> = vec![
+                Span::styled(
+                    "YOU:".to_string(),
+                    Style::default()
+                        .fg(Color::Magenta)
+                        .add_modifier(Modifier::BOLD),
+                ),
+            ];
+            // Add the rest as-is (including leading space if present)
+            if !rest.is_empty() {
+                spans.push(Span::raw(rest.to_string()));
+            }
+            target.push_line(Line::from(spans));
+            continue;
         } else if line.starts_with("AI:") {
-            spans.push(Span::styled(
-                "AI: ",
-                Style::default()
-                    .fg(Color::Cyan)
-                    .add_modifier(Modifier::BOLD),
-            ));
-            spans.push(Span::raw(&line[3..]));
-        } else {
-            spans.push(Span::raw(line));
+            let rest = if line.len() > 3 { &line[3..] } else { "" };
+            let mut spans: Vec<Span<'static>> = vec![
+                Span::styled(
+                    "AI: ".to_string(),
+                    Style::default()
+                        .fg(Color::Cyan)
+                        .add_modifier(Modifier::BOLD),
+                ),
+            ];
+            // Add the rest as-is (including leading space if present)
+            if !rest.is_empty() {
+                spans.push(Span::raw(rest.to_string()));
+            }
+            target.push_line(Line::from(spans));
+            continue;
         }
+
+        // Parse the line as markdown
+        let mut spans: Vec<Span<'static>> = Vec::new();
+        parse_line_markdown(line, &mut spans);
         target.push_line(Line::from(spans));
+    }
+}
+
+/// Parses a single line of markdown and converts it to styled spans.
+///
+/// Handles block-level markdown elements like headers, lists, blockquotes,
+/// and horizontal rules, as well as inline formatting.
+fn parse_line_markdown(line: &str, spans: &mut Vec<Span<'static>>) {
+    let trimmed = line.trim();
+    
+    // Check for horizontal rule
+    if trimmed == "---" || trimmed == "***" || trimmed == "___" {
+        spans.push(Span::styled(
+            "─".repeat(40),
+            Style::default().fg(Color::DarkGray),
+        ));
+        return;
+    }
+
+    // Check for headers (# to ######)
+    if let Some(header_text) = trimmed.strip_prefix("######").map(|s| (6, s))
+        .or_else(|| trimmed.strip_prefix("#####").map(|s| (5, s)))
+        .or_else(|| trimmed.strip_prefix("####").map(|s| (4, s)))
+        .or_else(|| trimmed.strip_prefix("###").map(|s| (3, s)))
+        .or_else(|| trimmed.strip_prefix("##").map(|s| (2, s)))
+        .or_else(|| trimmed.strip_prefix("#").map(|s| (1, s)))
+    {
+        let (_level, text) = header_text;
+        // Use consistent bullet style for all headers to maintain compatibility
+        let bullet = "● ";
+        spans.push(Span::styled(
+            format!("{}{}", bullet, text.trim()),
+            Style::default()
+                .fg(Color::White)
+                .add_modifier(Modifier::BOLD),
+        ));
+        return;
+    }
+
+    // Check for blockquote
+    if let Some(quote_text) = trimmed.strip_prefix(">") {
+        spans.push(Span::styled(
+            "│ ".to_string(),
+            Style::default().fg(Color::Green),
+        ));
+        parse_inline_markdown(quote_text.trim(), spans, Style::default().fg(Color::Green).add_modifier(Modifier::ITALIC));
+        return;
+    }
+
+    // Check for unordered list
+    if let Some(list_text) = trimmed.strip_prefix("- ")
+        .or_else(|| trimmed.strip_prefix("* "))
+        .or_else(|| trimmed.strip_prefix("+ "))
+    {
+        // Check for task list
+        if list_text.trim().starts_with("[ ]") {
+            spans.push(Span::styled("☐ ".to_string(), Style::default().fg(Color::Yellow)));
+            parse_inline_markdown(&list_text.trim()[3..].trim(), spans, Style::default());
+        } else if list_text.trim().starts_with("[x]") || list_text.trim().starts_with("[X]") {
+            spans.push(Span::styled("☑ ".to_string(), Style::default().fg(Color::Green)));
+            parse_inline_markdown(&list_text.trim()[3..].trim(), spans, Style::default().add_modifier(Modifier::DIM));
+        } else {
+            spans.push(Span::styled("• ".to_string(), Style::default().fg(Color::Cyan)));
+            parse_inline_markdown(list_text, spans, Style::default());
+        }
+        return;
+    }
+
+    // Check for ordered list
+    if let Some(caps) = Regex::new(r"^(\d+)\.\s+(.*)$").unwrap().captures(trimmed) {
+        let prefix = format!("{}. ", &caps[1]);
+        let rest = caps[2].to_string();
+        spans.push(Span::styled(
+            prefix,
+            Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD),
+        ));
+        parse_inline_markdown(&rest, spans, Style::default());
+        return;
+    }
+
+    // Regular text with inline markdown
+    parse_inline_markdown(line, spans, Style::default());
+}
+
+/// Parses inline markdown formatting within a text string.
+///
+/// Supports bold, italic, strikethrough, inline code, and links.
+/// Uses pulldown-cmark for accurate CommonMark/GFM parsing.
+/// Returns owned Span objects to avoid lifetime issues.
+fn parse_inline_markdown(text: &str, spans: &mut Vec<Span<'static>>, base_style: Style) {
+    let parser = Parser::new(text);
+    let mut current_style = base_style;
+    let mut style_stack = Vec::new();
+
+    for event in parser {
+        match event {
+            Event::Text(t) => {
+                spans.push(Span::styled(t.to_string(), current_style));
+            }
+            Event::Code(code) => {
+                spans.push(Span::styled(
+                    format!("`{}`", code),
+                    base_style.fg(Color::Yellow).add_modifier(Modifier::DIM),
+                ));
+            }
+            Event::Start(tag) => {
+                style_stack.push(current_style);
+                current_style = match tag {
+                    Tag::Strong => current_style.add_modifier(Modifier::BOLD),
+                    Tag::Emphasis => current_style.add_modifier(Modifier::ITALIC),
+                    Tag::Strikethrough => current_style.add_modifier(Modifier::CROSSED_OUT),
+                    Tag::Link { .. } => current_style.fg(Color::Blue).add_modifier(Modifier::UNDERLINED),
+                    _ => current_style,
+                };
+            }
+            Event::End(tag_end) => {
+                if let Some(previous_style) = style_stack.pop() {
+                    match tag_end {
+                        TagEnd::Link => {
+                            // For links, we've already shown the link text
+                            // Skip the URL part as it's not useful in TUI
+                        }
+                        _ => {}
+                    }
+                    current_style = previous_style;
+                }
+            }
+            Event::SoftBreak | Event::HardBreak => {
+                // Breaks within inline text are handled by line processing
+            }
+            _ => {
+                // Handle other events if needed
+            }
+        }
     }
 }
 

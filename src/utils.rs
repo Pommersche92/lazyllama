@@ -184,4 +184,107 @@ pub fn save_model_histories(model_histories: &std::collections::HashMap<String, 
     Ok(())
 }
 
+/// Loads application settings from the config file.
+///
+/// This function reads the settings from `~/.config/lazyllama/settings.toml`
+/// and deserializes them. If the file doesn't exist or cannot be read,
+/// it returns the default settings.
+///
+/// # Returns
+///
+/// Returns the loaded `Settings` or default settings if loading fails.
+///
+/// # File Location
+///
+/// The config file location varies by platform:
+/// - **Linux**: `~/.config/lazyllama/settings.toml`
+/// - **macOS**: `~/Library/Application Support/lazyllama/settings.toml`
+/// - **Windows**: `%APPDATA%\lazyllama\settings.toml`
+///
+/// # Example
+///
+/// ```no_run
+/// use lazyllama::utils::load_settings;
+///
+/// let settings = load_settings();
+/// println!("Theme: {:?}", settings.syntax_theme);
+/// ```
+pub fn load_settings() -> crate::app::Settings {
+    let config_path = match dirs::config_dir() {
+        Some(mut path) => {
+            path.push("lazyllama");
+            path.push("settings.toml");
+            path
+        }
+        None => return crate::app::Settings::default(),
+    };
+
+    // If the file doesn't exist, return defaults
+    if !config_path.exists() {
+        return crate::app::Settings::default();
+    }
+
+    // Try to read and parse the file
+    match fs::read_to_string(&config_path) {
+        Ok(contents) => {
+            match toml::from_str(&contents) {
+                Ok(settings) => settings,
+                Err(_) => crate::app::Settings::default(),
+            }
+        }
+        Err(_) => crate::app::Settings::default(),
+    }
+}
+
+/// Saves application settings to the config file.
+///
+/// This function serializes the provided settings and writes them to
+/// `~/.config/lazyllama/settings.toml`. The config directory is created
+/// if it doesn't exist.
+///
+/// # Arguments
+///
+/// * `settings` - The settings to save
+///
+/// # Returns
+///
+/// Returns `Ok(())` on success or an error if the operation fails.
+///
+/// # File Location
+///
+/// The config file location varies by platform:
+/// - **Linux**: `~/.config/lazyllama/settings.toml`
+/// - **macOS**: `~/Library/Application Support/lazyllama/settings.toml`
+/// - **Windows**: `%APPDATA%\lazyllama\settings.toml`
+///
+/// # Example
+///
+/// ```no_run
+/// use lazyllama::utils::save_settings;
+/// use lazyllama::app::{Settings, SyntaxTheme};
+/// use anyhow::Result;
+///
+/// fn main() -> Result<()> {
+///     let mut settings = Settings::default();
+///     settings.syntax_theme = SyntaxTheme::SolarizedDark;
+///     save_settings(&settings)?;
+///     Ok(())
+/// }
+/// ```
+pub fn save_settings(settings: &crate::app::Settings) -> Result<()> {
+    let mut config_dir = dirs::config_dir()
+        .ok_or_else(|| anyhow::anyhow!("Config directory not found"))?;
+    
+    config_dir.push("lazyllama");
+    fs::create_dir_all(&config_dir)?;
+    
+    let mut config_path = config_dir;
+    config_path.push("settings.toml");
+    
+    let toml_string = toml::to_string_pretty(settings)?;
+    fs::write(config_path, toml_string)?;
+    
+    Ok(())
+}
+
 

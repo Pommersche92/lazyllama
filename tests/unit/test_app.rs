@@ -76,6 +76,9 @@ fn create_test_app() -> App {
         debug_keys: false,
         debug_last_key: None,
         render_count: 0,
+        settings: lazyllama::app::Settings::default(),
+        show_settings_dialog: false,
+        settings_selection: 0,
     }
 }
 

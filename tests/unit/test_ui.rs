@@ -28,7 +28,7 @@ use lazyllama::ui::{parse_history, process_styled_text, BANNER};
 #[test]
 fn test_parse_history_simple_conversation() {
     let history = "YOU: Hello\nAI: Hi there!";
-    let parsed = parse_history(history);
+    let parsed = parse_history(history, "base16-ocean.dark");
     
     assert!(parsed.lines.len() >= 2);
     
@@ -74,7 +74,7 @@ fn test_parse_history_simple_conversation() {
 #[test]
 fn test_parse_history_with_code_block() {
     let history = "YOU: Show me code\nAI: Here's some code:\n\n```rust\nfn main() {\n    println!(\"Hello\");\n}\n```\n\nDone!";
-    let parsed = parse_history(history);
+    let parsed = parse_history(history, "base16-ocean.dark");
     
     // Should have multiple lines including code block frames
     assert!(parsed.lines.len() > 5);
@@ -149,7 +149,7 @@ console.log("Hi");
 
 That's it!"#;
     
-    let parsed = parse_history(history);
+    let parsed = parse_history(history, "base16-ocean.dark");
     
     // Should find both code block headers
     let python_header = parsed.lines.iter()
@@ -164,7 +164,7 @@ That's it!"#;
 #[test]
 fn test_parse_history_code_without_language() {
     let history = "AI: Code without language:\n\n```\necho \"hello\"\n```";
-    let parsed = parse_history(history);
+    let parsed = parse_history(history, "base16-ocean.dark");
     
     // Sollte "code" als Standard-Sprache verwenden
     let header_line = parsed.lines.iter()
@@ -253,13 +253,13 @@ fn test_process_styled_text_mixed_content() {
 
 #[test]
 fn test_parse_history_empty_string() {
-    let parsed = parse_history("");
+    let parsed = parse_history("", "base16-ocean.dark");
     assert!(parsed.lines.is_empty() || parsed.lines.len() == 1);
 }
 
 #[test]
 fn test_parse_history_whitespace_only() {
-    let parsed = parse_history("   \n  \n   ");
+    let parsed = parse_history("   \n  \n   ", "base16-ocean.dark");
     // Sollte Whitespace-Zeilen beibehalten oder korrekt verarbeiten
     assert!(parsed.lines.len() >= 3);
 }
@@ -268,18 +268,18 @@ fn test_parse_history_whitespace_only() {
 fn test_code_block_edge_cases() {
     // Unvollständiger Code-Block
     let history1 = "```rust\nfn main() {";
-    let parsed1 = parse_history(history1);
+    let parsed1 = parse_history(history1, "base16-ocean.dark");
     // Sollte nicht crashen, aber möglicherweise nicht als Code-Block erkannt
     assert!(parsed1.lines.len() > 0);
     
     // Leerer Code-Block
     let history2 = "```\n```";
-    let parsed2 = parse_history(history2);
+    let parsed2 = parse_history(history2, "base16-ocean.dark");
     assert!(parsed2.lines.len() > 0);
     
     // Verschachtelte Backticks (sollten ignoriert werden)
     let history3 = "```\n`inner code`\n```";
-    let parsed3 = parse_history(history3);
+    let parsed3 = parse_history(history3, "base16-ocean.dark");
     assert!(parsed3.lines.len() > 2);
 }
 
@@ -308,7 +308,7 @@ fn test_banner_constant() {
 fn test_long_lines_in_history() {
     let long_line = "A".repeat(1000);
     let history = format!("YOU: {}\nAI: Response", long_line);
-    let parsed = parse_history(&history);
+    let parsed = parse_history(&history, "base16-ocean.dark");
     
     // Sollte lange Zeilen handhaben ohne zu crashen
     assert!(parsed.lines.len() >= 2);

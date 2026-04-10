@@ -120,6 +120,38 @@ async fn main() -> Result<()> {
                 let is_ctrl = key.modifiers.contains(KeyModifiers::CONTROL);
                 let is_shift = key.modifiers.contains(KeyModifiers::SHIFT);
                 
+                // Handle settings dialog navigation first if it's open
+                if app.show_settings_dialog {
+                    let num_themes = app::SyntaxTheme::all().len();
+                    match key.code {
+                        KeyCode::Esc | KeyCode::Char('q') => {
+                            app.show_settings_dialog = false;
+                            continue;
+                        }
+                        KeyCode::Up => {
+                            app.settings_selection = app.settings_selection.saturating_sub(1);
+                            continue;
+                        }
+                        KeyCode::Down => {
+                            if app.settings_selection < num_themes - 1 {
+                                app.settings_selection += 1;
+                            }
+                            continue;
+                        }
+                        KeyCode::Enter => {
+                            let themes = app::SyntaxTheme::all();
+                            if let Some(theme) = themes.get(app.settings_selection) {
+                                app.settings.syntax_theme = theme.clone();
+                                // Save settings to disk
+                                let _ = utils::save_settings(&app.settings);
+                            }
+                            app.show_settings_dialog = false;
+                            continue;
+                        }
+                        _ => continue, // Ignore other keys when dialog is open
+                    }
+                }
+                
                 match (key.code, is_ctrl, is_shift) {
                     // Quit application
                     (KeyCode::Char('q'), true, false) => should_quit = true,
@@ -155,6 +187,14 @@ async fn main() -> Result<()> {
                     
                     // Toggle autoscroll
                     (KeyCode::Char('s'), true, false) => app.autoscroll = !app.autoscroll,
+                    
+                    // Open settings dialog (Ctrl+O)
+                    (KeyCode::Char('o'), true, false) => {
+                        app.show_settings_dialog = !app.show_settings_dialog;
+                        if app.show_settings_dialog {
+                            app.settings_selection = 0; // Reset selection when opening
+                        }
+                    }
                     
                     // Cursor movement with Ctrl+Shift (word selection)
                     (KeyCode::Left, true, true) => {
