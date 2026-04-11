@@ -10,15 +10,19 @@ Unit tests have been extracted into separate modular files in the `tests/unit/` 
 
 - **`tests/unit/test_app.rs`**: 33 tests for App logic, cursor navigation, model management, text selection, and clipboard operations
 - **`tests/unit/test_ui.rs`**: 13 tests for text parsing, history rendering, markdown processing
-- **`tests/unit/test_utils.rs`**: 10 tests for filesystem operations, history storage
+- **`tests/unit/test_utils.rs`**: 14 tests for filesystem operations, history storage, and settings persistence
 - **`tests/unit/test_main.rs`**: 12 tests for event handling, key combinations
 - **`tests/test_unit.rs`**: Central entry point for all unit tests
 
-#### Total: 68 unit tests
+#### Total: 72 unit tests
 
 ### Integration Tests
 
 `tests/integration_tests.rs` contains 7 end-to-end tests that check the interaction between modules.
+
+### Doc Tests
+
+9 documentation tests (6 active, 3 ignored) validate code examples in documentation comments across the codebase.
 
 ### Performance Tests
 
@@ -51,7 +55,7 @@ cargo test --test test_unit unit::test_app
 # UI tests (13 tests)
 cargo test --test test_unit unit::test_ui
 
-# Utils tests (10 tests) 
+# Utils tests (14 tests - includes settings persistence) 
 cargo test --test test_unit unit::test_utils
 
 # Main tests (12 tests)

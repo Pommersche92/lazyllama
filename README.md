@@ -146,10 +146,11 @@ cargo doc --no-deps --open
 
 ## 🧪 Testing
 
-LazyLlama features a comprehensive test suite with 78 tests covering all functionality:
+LazyLlama features a comprehensive test suite with 88 tests covering all functionality:
 
-* **Unit Tests**: 68 modularized tests for individual components
+* **Unit Tests**: 72 modularized tests for individual components
 * **Integration Tests**: 7 end-to-end tests for component interaction
+* **Doc Tests**: 9 documentation tests (6 active, 3 ignored)
 * **Performance Benchmarks**: Continuous performance monitoring
 
 ### Running Tests
