@@ -15,6 +15,7 @@
 * **Model Management:** Easily switch between installed Ollama models using Ctrl+arrow keys with **separate input/output buffers per model**.
 * **Smart Buffer Management:** Each LLM maintains its own chat history, input text, and scroll position.
 * **Automatic Logging:** Every chat session is automatically saved as a text file in `~/.local/share/lazyllama/` (both combined and per-model histories).
+* **Configurable Keybindings:** All keyboard shortcuts can be customized via the settings.toml config file.
 * **Performance:** Built with Rust and Ratatui for ultra-low latency and minimal resource footprint.
 
 ## 🚀 Installation
@@ -70,7 +71,9 @@ Download the latest Windows x64 ZIP from [GitHub Releases](https://github.com/Po
    cargo install --path .
    ```
 
-## ⌨️ Controls
+## ⌨️ Default Controls
+
+All keybindings are **fully configurable** via the settings.toml file. See [Configuring Keybindings](#configuring-keybindings) for details.
 
 | Key | Action |
 | --- | --- |
@@ -117,15 +120,93 @@ Settings are automatically saved when you apply changes and will be restored on 
 ### Config File Location
 
 Settings are stored in:
+
 * **Linux/macOS**: `~/.config/lazyllama/settings.toml`
 * **Windows**: `%APPDATA%\lazyllama\settings.toml`
 
-You can manually edit the config file if needed. Example:
+### Configuring Keybindings
+
+All keyboard shortcuts can be customized by adding a `[keybindings]` section to your settings.toml file. The keybindings use the following format:
+
+```text
+C- = Ctrl modifier
+S- = Shift modifier
+-  = Separator for modifiers
+```
+
+**Examples:**
+
+* `C-q` — Ctrl+Q
+* `C-S-c` — Ctrl+Shift+C
+* `S-Enter` — Shift+Enter
+* `C-Up` — Ctrl+Up Arrow
+* `PageUp` — Page Up key
+
+Here's a complete example of a custom keybinding configuration:
 
 ```toml
-[settings]
-syntax_theme = "SolarizedDark"
+[keybindings]
+quit = "C-q"
+clear_history = "C-c"
+copy = "C-S-c"
+paste = "C-S-v"
+toggle_autoscroll = "C-s"
+open_settings = "C-o"
+select_next_model = "C-Down"
+select_previous_model = "C-Up"
+send_query = "Enter"
+insert_newline = "S-Enter"
+cursor_up = "Up"
+cursor_down = "Down"
+cursor_left = "Left"
+cursor_right = "Right"
+cursor_word_left = "C-Left"
+cursor_word_right = "C-Right"
+cursor_home = "Home"
+cursor_end = "End"
+cursor_left_select = "S-Left"
+cursor_right_select = "S-Right"
+cursor_word_left_select = "C-S-Left"
+cursor_word_right_select = "C-S-Right"
+cursor_home_select = "S-Home"
+cursor_end_select = "S-End"
+delete_word_left = "C-Backspace"
+delete_word_right = "C-Delete"
+delete_forward = "Delete"
+backspace = "Backspace"
+page_up = "PageUp"
+page_down = "PageDown"
+close_dialog = "Esc"
+dialog_up = "Up"
+dialog_down = "Down"
+dialog_apply = "Enter"
 ```
+
+You only need to specify the keys you want to change. Unspecified keybindings will use their default values.
+
+#### Supported Key Names
+
+| Key Name | Description |
+| -------- | ----------- |
+| `A-Z`, `a-z` | Letter keys |
+| `Enter` / `Return` | Enter key |
+| `Backspace` | Backspace key |
+| `Delete` | Delete key |
+| `Up` / `Down` / `Left` / `Right` | Arrow keys |
+| `Home` / `End` | Home and End keys |
+| `PageUp` / `PageDown` | Page Up and Page Down keys |
+| `Esc` / `Escape` | Escape key |
+
+#### Dialog-specific Keys
+
+The following keys only apply when the settings dialog is open:
+
+| Setting | Default | Description |
+| ------- | ------- | ----------- |
+| `close_dialog` | `Esc` | Close the settings dialog without saving |
+| `dialog_up` | `Up` | Move selection up in the dialog |
+| `dialog_down` | `Down` | Move selection down in the dialog |
+| `dialog_apply` | `Enter` | Apply the selected setting and close |
 
 ## 🛠 Project Structure
 
@@ -143,6 +224,8 @@ You can generate the full technical documentation locally:
 ```bash
 cargo doc --no-deps --open
 ```
+
+Online documentation and more resources are available at [lazyllama.app](https://lazyllama.app/).
 
 ## 🧪 Testing
 
@@ -198,6 +281,16 @@ For detailed testing information, test structure, and maintenance guidelines, se
 This project is licensed under the **GPL-2.0-or-later**. See the [LICENSE](LICENSE) file for details.
 
 ## 📝 Changelog
+
+### v0.5.3 - July 2026
+
+* **⌨️ Configurable Keybindings**: All keyboard shortcuts can now be customized via the `settings.toml` config file
+  * Added `KeyCombination` struct supporting `C-` (Ctrl), `S-` (Shift), and combined `C-S-` modifier prefixes
+  * Introduced `KeyBindings` struct with 33 configurable actions (Quit, Copy, Paste, Cursor Movement, Model Switching, Dialog Navigation, etc.)
+  * Each action has a sensible default matching the traditional LazyLlama keybindings
+  * Existing `settings.toml` files remain fully compatible — keybindings are optional with `#[serde(default)]`
+  * Status bar now dynamically displays the actual configured keybindings using `short_display()` with Unicode symbols
+  * Full documentation available at [lazyllama.app/docs/keybindings](https://lazyllama.app/docs/keybindings)
 
 ### v0.5.2 - April 2026
 

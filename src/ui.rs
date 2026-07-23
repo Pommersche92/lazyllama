@@ -282,6 +282,7 @@ fn highlight_code_block(code: &str, language: &str, theme_name: &str) -> Vec<Lin
 ///   - Selection highlighting with blue background
 ///   - Blinking cursor with reversed colors
 /// - **Status Bar**: Keyboard shortcuts and current model information
+///   - Keybindings are dynamically pulled from the configured settings
 /// - **Responsive Design**: Adapts to terminal size changes
 /// - **Smart Scrolling**: Auto-scroll with manual override capability
 ///
@@ -563,8 +564,34 @@ pub fn ui(f: &mut Frame, app: &mut App) {
             .scroll((scroll_offset, 0)),
         chat_chunks[1],
     );
+    
+    // Build status bar with dynamic keybindings from settings
+    let kb = &app.settings.keybindings;
+    let status = build_status_bar(app, kb, &selected_model, total_lines, visible_height);
+    
+    f.render_widget(
+        Paragraph::new(status).style(Style::default().bg(Color::White).fg(Color::Black)),
+        root_layout[2],
+    );
+    
+    // Render settings dialog if open
+    if app.show_settings_dialog {
+        render_settings_dialog(f, app);
+    }
+}
+
+/// Builds the status bar text with dynamic keybinding display.
+fn build_status_bar(app: &App, kb: &crate::app::KeyBindings, selected_model: &str, total_lines: u16, visible_height: u16) -> String {
     let mut status = format!(
-        " C-q: Quit | C-o: Settings | C-S-c: Copy | C-S-v: Paste | S-Enter: Newline | PgUp/Dn: Scroll | C-↑↓: Model [{}] ",
+        " {}: Quit | {}: Settings | {}: Copy | {}: Paste | {}: Newline | {}/{}: Scroll | {}: Model [{}] ",
+        kb.quit.short_display(),
+        kb.open_settings.short_display(),
+        kb.copy.short_display(),
+        kb.paste.short_display(),
+        kb.insert_newline.short_display(),
+        kb.page_up.short_display(),
+        kb.page_down.short_display(),
+        kb.select_next_model.short_display(),
         selected_model
     );
     if app.debug_keys {
@@ -575,15 +602,7 @@ pub fn ui(f: &mut Frame, app: &mut App) {
             app.scroll, max_scroll, app.render_count, last_key
         ));
     }
-    f.render_widget(
-        Paragraph::new(status).style(Style::default().bg(Color::White).fg(Color::Black)),
-        root_layout[2],
-    );
-    
-    // Render settings dialog if open
-    if app.show_settings_dialog {
-        render_settings_dialog(f, app);
-    }
+    status
 }
 
 /// Renders the settings dialog popup.
@@ -1027,5 +1046,3 @@ fn parse_inline_markdown(text: &str, spans: &mut Vec<Span<'static>>, base_style:
         }
     }
 }
-
-
