@@ -133,20 +133,346 @@ impl Default for SyntaxTheme {
     }
 }
 
+/// Represents a key combination for configurable keybindings.
+///
+/// This struct stores a parsed key combination consisting of a key code
+/// and optional modifiers (Ctrl, Shift). It can be serialized/deserialized
+/// from a string format like `"C-q"`, `"C-S-c"`, `"Enter"`, `"S-Enter"`, etc.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(try_from = "String", into = "String")]
+pub struct KeyCombination {
+    pub key_code: String,
+    pub ctrl: bool,
+    pub shift: bool,
+}
+
+impl KeyCombination {
+    /// Parses a key combination string into a KeyCombination.
+    ///
+    /// Supported formats:
+    /// - `"C-q"` → Ctrl+Q
+    /// - `"C-S-c"` → Ctrl+Shift+C
+    /// - `"S-Enter"` → Shift+Enter
+    /// - `"Enter"` → Enter (no modifiers)
+    /// - `"Up"` → Up arrow
+    /// - `"C-Up"` → Ctrl+Up
+    /// - `"PageUp"` → PageUp
+    /// - `"Backspace"` → Backspace
+    /// - `"Delete"` → Delete
+    /// - `"Home"` → Home
+    /// - `"End"` → End
+    /// - `"Esc"` → Escape
+    /// - `"C-c"` → Ctrl+C
+    pub fn parse(s: &str) -> Result<Self, String> {
+        let mut ctrl = false;
+        let mut shift = false;
+        let mut parts: Vec<&str> = s.split('-').collect();
+        
+        // Check for modifier prefixes (only uppercase C and S are modifiers)
+        while let Some(part) = parts.first() {
+            match *part {
+                "C" => {
+                    ctrl = true;
+                    parts.remove(0);
+                }
+                "S" => {
+                    shift = true;
+                    parts.remove(0);
+                }
+                _ => break,
+            }
+        }
+        
+        if parts.is_empty() {
+            return Err(format!("Invalid key combination: '{}'", s));
+        }
+        
+        let key_code = parts.join("-");
+        
+        Ok(KeyCombination { key_code, ctrl, shift })
+    }
+    
+    /// Returns a human-readable display string for this key combination.
+    pub fn display(&self) -> String {
+        let mut result = String::new();
+        if self.ctrl {
+            result.push_str("C-");
+        }
+        if self.shift {
+            result.push_str("S-");
+        }
+        result.push_str(&self.key_code);
+        result
+    }
+    
+    /// Returns a short display string suitable for status bars.
+    pub fn short_display(&self) -> String {
+        let mut result = String::new();
+        if self.ctrl {
+            result.push('^');
+        }
+        if self.shift {
+            result.push_str("S-");
+        }
+        // Shorten common key names
+        match self.key_code.as_str() {
+            "Enter" => result.push_str("⏎"),
+            "Backspace" => result.push_str("⌫"),
+            "Delete" => result.push_str("⌦"),
+            "Escape" | "Esc" => result.push_str("Esc"),
+            "PageUp" => result.push_str("Pg↑"),
+            "PageDown" => result.push_str("Pg↓"),
+            "Up" => result.push_str("↑"),
+            "Down" => result.push_str("↓"),
+            "Left" => result.push_str("←"),
+            "Right" => result.push_str("→"),
+            "Home" => result.push_str("↖"),
+            "End" => result.push_str("↘"),
+            other => result.push_str(other),
+        }
+        result
+    }
+}
+
+impl TryFrom<String> for KeyCombination {
+    type Error = String;
+    
+    fn try_from(s: String) -> Result<Self, Self::Error> {
+        KeyCombination::parse(&s)
+    }
+}
+
+impl From<KeyCombination> for String {
+    fn from(kc: KeyCombination) -> String {
+        kc.display()
+    }
+}
+
+/// Configurable keybindings for all application actions.
+///
+/// Each field represents a specific action and its associated key combination.
+/// All fields have sensible defaults matching the traditional LazyLlama keybindings.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct KeyBindings {
+    pub quit: KeyCombination,
+    pub clear_history: KeyCombination,
+    pub copy: KeyCombination,
+    pub paste: KeyCombination,
+    pub toggle_autoscroll: KeyCombination,
+    pub open_settings: KeyCombination,
+    pub select_next_model: KeyCombination,
+    pub select_previous_model: KeyCombination,
+    pub send_query: KeyCombination,
+    pub insert_newline: KeyCombination,
+    pub cursor_up: KeyCombination,
+    pub cursor_down: KeyCombination,
+    pub cursor_left: KeyCombination,
+    pub cursor_right: KeyCombination,
+    pub cursor_word_left: KeyCombination,
+    pub cursor_word_right: KeyCombination,
+    pub cursor_home: KeyCombination,
+    pub cursor_end: KeyCombination,
+    pub cursor_left_select: KeyCombination,
+    pub cursor_right_select: KeyCombination,
+    pub cursor_word_left_select: KeyCombination,
+    pub cursor_word_right_select: KeyCombination,
+    pub cursor_home_select: KeyCombination,
+    pub cursor_end_select: KeyCombination,
+    pub delete_word_left: KeyCombination,
+    pub delete_word_right: KeyCombination,
+    pub delete_forward: KeyCombination,
+    pub backspace: KeyCombination,
+    pub page_up: KeyCombination,
+    pub page_down: KeyCombination,
+    pub close_dialog: KeyCombination,
+    pub dialog_up: KeyCombination,
+    pub dialog_down: KeyCombination,
+    pub dialog_apply: KeyCombination,
+}
+
+impl KeyBindings {
+    /// Returns the key combination for a named binding.
+    pub fn get(&self, name: &str) -> Option<&KeyCombination> {
+        match name {
+            "quit" => Some(&self.quit),
+            "clear_history" => Some(&self.clear_history),
+            "copy" => Some(&self.copy),
+            "paste" => Some(&self.paste),
+            "toggle_autoscroll" => Some(&self.toggle_autoscroll),
+            "open_settings" => Some(&self.open_settings),
+            "select_next_model" => Some(&self.select_next_model),
+            "select_previous_model" => Some(&self.select_previous_model),
+            "send_query" => Some(&self.send_query),
+            "insert_newline" => Some(&self.insert_newline),
+            "cursor_up" => Some(&self.cursor_up),
+            "cursor_down" => Some(&self.cursor_down),
+            "cursor_left" => Some(&self.cursor_left),
+            "cursor_right" => Some(&self.cursor_right),
+            "cursor_word_left" => Some(&self.cursor_word_left),
+            "cursor_word_right" => Some(&self.cursor_word_right),
+            "cursor_home" => Some(&self.cursor_home),
+            "cursor_end" => Some(&self.cursor_end),
+            "cursor_left_select" => Some(&self.cursor_left_select),
+            "cursor_right_select" => Some(&self.cursor_right_select),
+            "cursor_word_left_select" => Some(&self.cursor_word_left_select),
+            "cursor_word_right_select" => Some(&self.cursor_word_right_select),
+            "cursor_home_select" => Some(&self.cursor_home_select),
+            "cursor_end_select" => Some(&self.cursor_end_select),
+            "delete_word_left" => Some(&self.delete_word_left),
+            "delete_word_right" => Some(&self.delete_word_right),
+            "delete_forward" => Some(&self.delete_forward),
+            "backspace" => Some(&self.backspace),
+            "page_up" => Some(&self.page_up),
+            "page_down" => Some(&self.page_down),
+            "close_dialog" => Some(&self.close_dialog),
+            "dialog_up" => Some(&self.dialog_up),
+            "dialog_down" => Some(&self.dialog_down),
+            "dialog_apply" => Some(&self.dialog_apply),
+            _ => None,
+        }
+    }
+    
+    /// Sets the key combination for a named binding.
+    pub fn set(&mut self, name: &str, kc: KeyCombination) {
+        match name {
+            "quit" => self.quit = kc,
+            "clear_history" => self.clear_history = kc,
+            "copy" => self.copy = kc,
+            "paste" => self.paste = kc,
+            "toggle_autoscroll" => self.toggle_autoscroll = kc,
+            "open_settings" => self.open_settings = kc,
+            "select_next_model" => self.select_next_model = kc,
+            "select_previous_model" => self.select_previous_model = kc,
+            "send_query" => self.send_query = kc,
+            "insert_newline" => self.insert_newline = kc,
+            "cursor_up" => self.cursor_up = kc,
+            "cursor_down" => self.cursor_down = kc,
+            "cursor_left" => self.cursor_left = kc,
+            "cursor_right" => self.cursor_right = kc,
+            "cursor_word_left" => self.cursor_word_left = kc,
+            "cursor_word_right" => self.cursor_word_right = kc,
+            "cursor_home" => self.cursor_home = kc,
+            "cursor_end" => self.cursor_end = kc,
+            "cursor_left_select" => self.cursor_left_select = kc,
+            "cursor_right_select" => self.cursor_right_select = kc,
+            "cursor_word_left_select" => self.cursor_word_left_select = kc,
+            "cursor_word_right_select" => self.cursor_word_right_select = kc,
+            "cursor_home_select" => self.cursor_home_select = kc,
+            "cursor_end_select" => self.cursor_end_select = kc,
+            "delete_word_left" => self.delete_word_left = kc,
+            "delete_word_right" => self.delete_word_right = kc,
+            "delete_forward" => self.delete_forward = kc,
+            "backspace" => self.backspace = kc,
+            "page_up" => self.page_up = kc,
+            "page_down" => self.page_down = kc,
+            "close_dialog" => self.close_dialog = kc,
+            "dialog_up" => self.dialog_up = kc,
+            "dialog_down" => self.dialog_down = kc,
+            "dialog_apply" => self.dialog_apply = kc,
+            _ => {}
+        }
+    }
+    
+    /// Returns a list of all binding names and their display names, in order.
+    pub fn all() -> Vec<(&'static str, &'static str)> {
+        vec![
+            ("quit", "Quit"),
+            ("clear_history", "Clear History"),
+            ("copy", "Copy Selection"),
+            ("paste", "Paste"),
+            ("toggle_autoscroll", "Toggle Autoscroll"),
+            ("open_settings", "Open Settings"),
+            ("select_next_model", "Next Model"),
+            ("select_previous_model", "Previous Model"),
+            ("send_query", "Send Query"),
+            ("insert_newline", "Insert Newline"),
+            ("cursor_up", "Cursor Up"),
+            ("cursor_down", "Cursor Down"),
+            ("cursor_left", "Cursor Left"),
+            ("cursor_right", "Cursor Right"),
+            ("cursor_word_left", "Word Left"),
+            ("cursor_word_right", "Word Right"),
+            ("cursor_home", "Home"),
+            ("cursor_end", "End"),
+            ("cursor_left_select", "Select Left"),
+            ("cursor_right_select", "Select Right"),
+            ("cursor_word_left_select", "Select Word Left"),
+            ("cursor_word_right_select", "Select Word Right"),
+            ("cursor_home_select", "Select Home"),
+            ("cursor_end_select", "Select End"),
+            ("delete_word_left", "Delete Word Left"),
+            ("delete_word_right", "Delete Word Right"),
+            ("delete_forward", "Delete Forward"),
+            ("backspace", "Backspace"),
+            ("page_up", "Page Up"),
+            ("page_down", "Page Down"),
+            ("close_dialog", "Close Dialog"),
+            ("dialog_up", "Dialog Up"),
+            ("dialog_down", "Dialog Down"),
+            ("dialog_apply", "Dialog Apply"),
+        ]
+    }
+}
+
+impl Default for KeyBindings {
+    fn default() -> Self {
+        KeyBindings {
+            quit: KeyCombination::parse("C-q").unwrap(),
+            clear_history: KeyCombination::parse("C-c").unwrap(),
+            copy: KeyCombination::parse("C-S-c").unwrap(),
+            paste: KeyCombination::parse("C-S-v").unwrap(),
+            toggle_autoscroll: KeyCombination::parse("C-s").unwrap(),
+            open_settings: KeyCombination::parse("C-o").unwrap(),
+            select_next_model: KeyCombination::parse("C-Down").unwrap(),
+            select_previous_model: KeyCombination::parse("C-Up").unwrap(),
+            send_query: KeyCombination::parse("Enter").unwrap(),
+            insert_newline: KeyCombination::parse("S-Enter").unwrap(),
+            cursor_up: KeyCombination::parse("Up").unwrap(),
+            cursor_down: KeyCombination::parse("Down").unwrap(),
+            cursor_left: KeyCombination::parse("Left").unwrap(),
+            cursor_right: KeyCombination::parse("Right").unwrap(),
+            cursor_word_left: KeyCombination::parse("C-Left").unwrap(),
+            cursor_word_right: KeyCombination::parse("C-Right").unwrap(),
+            cursor_home: KeyCombination::parse("Home").unwrap(),
+            cursor_end: KeyCombination::parse("End").unwrap(),
+            cursor_left_select: KeyCombination::parse("S-Left").unwrap(),
+            cursor_right_select: KeyCombination::parse("S-Right").unwrap(),
+            cursor_word_left_select: KeyCombination::parse("C-S-Left").unwrap(),
+            cursor_word_right_select: KeyCombination::parse("C-S-Right").unwrap(),
+            cursor_home_select: KeyCombination::parse("S-Home").unwrap(),
+            cursor_end_select: KeyCombination::parse("S-End").unwrap(),
+            delete_word_left: KeyCombination::parse("C-Backspace").unwrap(),
+            delete_word_right: KeyCombination::parse("C-Delete").unwrap(),
+            delete_forward: KeyCombination::parse("Delete").unwrap(),
+            backspace: KeyCombination::parse("Backspace").unwrap(),
+            page_up: KeyCombination::parse("PageUp").unwrap(),
+            page_down: KeyCombination::parse("PageDown").unwrap(),
+            close_dialog: KeyCombination::parse("Esc").unwrap(),
+            dialog_up: KeyCombination::parse("Up").unwrap(),
+            dialog_down: KeyCombination::parse("Down").unwrap(),
+            dialog_apply: KeyCombination::parse("Enter").unwrap(),
+        }
+    }
+}
+
 /// Application settings that can be customized by the user.
 ///
 /// These settings control the behavior and appearance of the application,
-/// particularly for syntax highlighting themes.
+/// including syntax highlighting themes and configurable keybindings.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Settings {
     /// Currently selected syntax highlighting theme for code blocks.
     pub syntax_theme: SyntaxTheme,
+    /// Configurable keybindings for all application actions.
+    #[serde(default)]
+    pub keybindings: KeyBindings,
 }
 
 impl Default for Settings {
     fn default() -> Self {
         Settings {
             syntax_theme: SyntaxTheme::default(),
+            keybindings: KeyBindings::default(),
         }
     }
 }
@@ -203,12 +529,14 @@ pub struct App {
     pub debug_last_key: Option<String>,
     /// Frame counter for render debugging.
     pub render_count: u64,
-    /// Application settings (themes, etc.).
+    /// Application settings (themes, keybindings, etc.).
     pub settings: Settings,
     /// Whether the settings dialog is currently visible.
     pub show_settings_dialog: bool,
     /// Currently selected item in the settings dialog.
     pub settings_selection: usize,
+    /// Name of the keybinding currently being recorded (None if not recording).
+    pub settings_recording_binding: Option<String>,
 }
 
 impl App {
@@ -271,6 +599,7 @@ impl App {
             settings,
             show_settings_dialog: false,
             settings_selection: 0,
+            settings_recording_binding: None,
         };
         app.refresh_models().await;
         app
@@ -998,6 +1327,7 @@ impl App {
 
     /// Moves the cursor one word to the left while extending the selection.
     ///
+
     /// This method implements the Ctrl+Shift+Left keyboard shortcut, enabling
     /// users to select text word by word in the backward direction. It uses
     /// the same word boundary detection as `move_cursor_word_left`, treating
@@ -1420,5 +1750,3 @@ impl App {
         Ok(())
     }
 }
-
-

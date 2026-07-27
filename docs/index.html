@@ -146,7 +146,7 @@
                     </a>
                 </div>
                 <div class="version-info">
-                    <span class="version-badge">v0.5.2</span>
+                    <span class="version-badge">v0.5.3</span>
                     <span class="separator">•</span>
                     <span class="license">GPL-2.0-or-later</span>
                 </div>
@@ -167,7 +167,7 @@
                             <span class="command">lazyllama</span>
                         </div>
                         <div class="terminal-line">
-                            <span class="output">🦙 LazyLlama v0.5.2 - Starting...</span>
+                            <span class="output">🦙 LazyLlama v0.5.3 - Starting...</span>
                         </div>
                         <div class="terminal-line">
                             <span class="output">📡 Connected to Ollama</span>
@@ -600,6 +600,151 @@ cargo install --path .</code></pre>
                         <span>Delete next word</span>
                     </div>
                 </div>
+            </div>
+            <div class="keybindings-config" style="margin-top: 2rem; padding: 0 1rem;">
+                <p style="color: var(--text-secondary, #b0b0b0); margin-bottom: 0.5rem;">All keyboard shortcuts are <strong>fully customizable</strong> via the <code>settings.toml</code> config file.</p>
+                <details class="keybindings-details" style="cursor: pointer;">
+                    <summary style="font-size: 1.1rem; font-weight: 600; color: var(--accent-color, #00d4aa); padding: 0.5rem 0;">🔧 How to Configure Keybindings</summary>
+                    <div class="keybindings-content" style="margin-top: 1rem;">
+                        <p style="color: var(--text-secondary, #b0b0b0); margin-bottom: 0.75rem;">Create or edit <code>~/.config/lazyllama/settings.toml</code> (Linux/macOS) or <code>%APPDATA%\lazyllama\settings.toml</code> (Windows) and add a <code>[keybindings]</code> section.</p>
+                        
+                        <p style="color: var(--text-secondary, #b0b0b0); margin-bottom: 0.5rem;">Keybinding format: <code>C-</code> = Ctrl, <code>S-</code> = Shift, <code>C-S-</code> = Ctrl+Shift. Examples:</p>
+                        <div class="code-block" style="background: var(--code-bg, #1a1a2e); border-radius: 8px; padding: 0.75rem; overflow-x: auto; margin-bottom: 1rem;">
+                            <pre><code style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: var(--text-primary, #e0e0e0);">quit = "C-q"            # Ctrl+Q
+copy = "C-S-c"         # Ctrl+Shift+C
+insert_newline = "S-Enter"  # Shift+Enter
+select_next_model = "C-Down" # Ctrl+Down Arrow
+send_query = "Enter"   # Enter (no modifier)</code></pre>
+                        </div>
+
+                        <p style="color: var(--text-secondary, #b0b0b0); margin-bottom: 0.75rem;">Here's the <strong>complete reference</strong> of all configurable actions with their defaults:</p>
+
+                        <h4 style="color: var(--accent-color, #00d4aa); margin: 1.25rem 0 0.5rem;">Application Controls</h4>
+                        <div class="controls-ref-table" style="overflow-x: auto;">
+                            <table style="width: 100%; border-collapse: collapse; margin-bottom: 1rem;">
+                                <thead>
+                                    <tr><th style="padding: 0.5rem; text-align: left; border-bottom: 1px solid var(--border-color, #333); color: var(--accent-color, #00d4aa);">Setting</th><th style="padding: 0.5rem; text-align: left; border-bottom: 1px solid var(--border-color, #333); color: var(--accent-color, #00d4aa);">Default</th><th style="padding: 0.5rem; text-align: left; border-bottom: 1px solid var(--border-color, #333); color: var(--accent-color, #00d4aa);">Action</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);"><code>quit</code></td><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);"><kbd>C-q</kbd></td><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);">Quit the application</td></tr>
+                                    <tr><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);"><code>clear_history</code></td><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);"><kbd>C-c</kbd></td><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);">Clear current chat history</td></tr>
+                                    <tr><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);"><code>open_settings</code></td><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);"><kbd>C-o</kbd></td><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);">Open settings dialog</td></tr>
+                                    <tr><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);"><code>toggle_autoscroll</code></td><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);"><kbd>C-s</kbd></td><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);">Toggle autoscroll mode</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <h4 style="color: var(--accent-color, #00d4aa); margin: 1.25rem 0 0.5rem;">Clipboard</h4>
+                        <div class="controls-ref-table" style="overflow-x: auto;">
+                            <table style="width: 100%; border-collapse: collapse; margin-bottom: 1rem;">
+                                <thead>
+                                    <tr><th style="padding: 0.5rem; text-align: left; border-bottom: 1px solid var(--border-color, #333); color: var(--accent-color, #00d4aa);">Setting</th><th style="padding: 0.5rem; text-align: left; border-bottom: 1px solid var(--border-color, #333); color: var(--accent-color, #00d4aa);">Default</th><th style="padding: 0.5rem; text-align: left; border-bottom: 1px solid var(--border-color, #333); color: var(--accent-color, #00d4aa);">Action</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);"><code>copy</code></td><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);"><kbd>C-S-c</kbd></td><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);">Copy selected text to clipboard</td></tr>
+                                    <tr><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);"><code>paste</code></td><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);"><kbd>C-S-v</kbd></td><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);">Paste text from clipboard</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <h4 style="color: var(--accent-color, #00d4aa); margin: 1.25rem 0 0.5rem;">Input & Cursor Navigation</h4>
+                        <div class="controls-ref-table" style="overflow-x: auto;">
+                            <table style="width: 100%; border-collapse: collapse; margin-bottom: 1rem;">
+                                <thead>
+                                    <tr><th style="padding: 0.5rem; text-align: left; border-bottom: 1px solid var(--border-color, #333); color: var(--accent-color, #00d4aa);">Setting</th><th style="padding: 0.5rem; text-align: left; border-bottom: 1px solid var(--border-color, #333); color: var(--accent-color, #00d4aa);">Default</th><th style="padding: 0.5rem; text-align: left; border-bottom: 1px solid var(--border-color, #333); color: var(--accent-color, #00d4aa);">Action</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);"><code>send_query</code></td><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);"><kbd>Enter</kbd></td><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);">Send message to AI</td></tr>
+                                    <tr><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);"><code>insert_newline</code></td><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);"><kbd>S-Enter</kbd></td><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);">Insert newline in input</td></tr>
+                                    <tr><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);"><code>cursor_up</code></td><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);"><kbd>↑</kbd></td><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);">Move cursor up</td></tr>
+                                    <tr><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);"><code>cursor_down</code></td><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);"><kbd>↓</kbd></td><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);">Move cursor down</td></tr>
+                                    <tr><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);"><code>cursor_left</code></td><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);"><kbd>←</kbd></td><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);">Move cursor left</td></tr>
+                                    <tr><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);"><code>cursor_right</code></td><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);"><kbd>→</kbd></td><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);">Move cursor right</td></tr>
+                                    <tr><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);"><code>cursor_word_left</code></td><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);"><kbd>C-←</kbd></td><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);">Jump to previous word</td></tr>
+                                    <tr><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);"><code>cursor_word_right</code></td><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);"><kbd>C-→</kbd></td><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);">Jump to next word</td></tr>
+                                    <tr><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);"><code>cursor_home</code></td><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);"><kbd>Home</kbd></td><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);">Jump to start of input</td></tr>
+                                    <tr><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);"><code>cursor_end</code></td><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);"><kbd>End</kbd></td><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);">Jump to end of input</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <h4 style="color: var(--accent-color, #00d4aa); margin: 1.25rem 0 0.5rem;">Text Selection</h4>
+                        <div class="controls-ref-table" style="overflow-x: auto;">
+                            <table style="width: 100%; border-collapse: collapse; margin-bottom: 1rem;">
+                                <thead>
+                                    <tr><th style="padding: 0.5rem; text-align: left; border-bottom: 1px solid var(--border-color, #333); color: var(--accent-color, #00d4aa);">Setting</th><th style="padding: 0.5rem; text-align: left; border-bottom: 1px solid var(--border-color, #333); color: var(--accent-color, #00d4aa);">Default</th><th style="padding: 0.5rem; text-align: left; border-bottom: 1px solid var(--border-color, #333); color: var(--accent-color, #00d4aa);">Action</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);"><code>cursor_left_select</code></td><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);"><kbd>S-←</kbd></td><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);">Select text left character-wise</td></tr>
+                                    <tr><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);"><code>cursor_right_select</code></td><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);"><kbd>S-→</kbd></td><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);">Select text right character-wise</td></tr>
+                                    <tr><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);"><code>cursor_word_left_select</code></td><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);"><kbd>C-S-←</kbd></td><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);">Select text left word-wise</td></tr>
+                                    <tr><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);"><code>cursor_word_right_select</code></td><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);"><kbd>C-S-→</kbd></td><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);">Select text right word-wise</td></tr>
+                                    <tr><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);"><code>cursor_home_select</code></td><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);"><kbd>S-Home</kbd></td><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);">Select to start of input</td></tr>
+                                    <tr><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);"><code>cursor_end_select</code></td><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);"><kbd>S-End</kbd></td><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);">Select to end of input</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <h4 style="color: var(--accent-color, #00d4aa); margin: 1.25rem 0 0.5rem;">Model Navigation</h4>
+                        <div class="controls-ref-table" style="overflow-x: auto;">
+                            <table style="width: 100%; border-collapse: collapse; margin-bottom: 1rem;">
+                                <thead>
+                                    <tr><th style="padding: 0.5rem; text-align: left; border-bottom: 1px solid var(--border-color, #333); color: var(--accent-color, #00d4aa);">Setting</th><th style="padding: 0.5rem; text-align: left; border-bottom: 1px solid var(--border-color, #333); color: var(--accent-color, #00d4aa);">Default</th><th style="padding: 0.5rem; text-align: left; border-bottom: 1px solid var(--border-color, #333); color: var(--accent-color, #00d4aa);">Action</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);"><code>select_next_model</code></td><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);"><kbd>C-↓</kbd></td><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);">Switch to next AI model</td></tr>
+                                    <tr><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);"><code>select_previous_model</code></td><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);"><kbd>C-↑</kbd></td><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);">Switch to previous AI model</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <h4 style="color: var(--accent-color, #00d4aa); margin: 1.25rem 0 0.5rem;">Deletion</h4>
+                        <div class="controls-ref-table" style="overflow-x: auto;">
+                            <table style="width: 100%; border-collapse: collapse; margin-bottom: 1rem;">
+                                <thead>
+                                    <tr><th style="padding: 0.5rem; text-align: left; border-bottom: 1px solid var(--border-color, #333); color: var(--accent-color, #00d4aa);">Setting</th><th style="padding: 0.5rem; text-align: left; border-bottom: 1px solid var(--border-color, #333); color: var(--accent-color, #00d4aa);">Default</th><th style="padding: 0.5rem; text-align: left; border-bottom: 1px solid var(--border-color, #333); color: var(--accent-color, #00d4aa);">Action</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);"><code>backspace</code></td><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);"><kbd>Backspace</kbd></td><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);">Delete character before cursor</td></tr>
+                                    <tr><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);"><code>delete_forward</code></td><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);"><kbd>Delete</kbd></td><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);">Delete character after cursor</td></tr>
+                                    <tr><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);"><code>delete_word_left</code></td><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);"><kbd>C-Backspace</kbd></td><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);">Delete previous word</td></tr>
+                                    <tr><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);"><code>delete_word_right</code></td><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);"><kbd>C-Delete</kbd></td><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);">Delete next word</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <h4 style="color: var(--accent-color, #00d4aa); margin: 1.25rem 0 0.5rem;">Scrolling</h4>
+                        <div class="controls-ref-table" style="overflow-x: auto;">
+                            <table style="width: 100%; border-collapse: collapse; margin-bottom: 1rem;">
+                                <thead>
+                                    <tr><th style="padding: 0.5rem; text-align: left; border-bottom: 1px solid var(--border-color, #333); color: var(--accent-color, #00d4aa);">Setting</th><th style="padding: 0.5rem; text-align: left; border-bottom: 1px solid var(--border-color, #333); color: var(--accent-color, #00d4aa);">Default</th><th style="padding: 0.5rem; text-align: left; border-bottom: 1px solid var(--border-color, #333); color: var(--accent-color, #00d4aa);">Action</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);"><code>page_up</code></td><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);"><kbd>PageUp</kbd></td><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);">Scroll history up</td></tr>
+                                    <tr><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);"><code>page_down</code></td><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);"><kbd>PageDown</kbd></td><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);">Scroll history down</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <h4 style="color: var(--accent-color, #00d4aa); margin: 1.25rem 0 0.5rem;">Dialog Keys</h4>
+                        <p style="color: var(--text-secondary, #b0b0b0); font-size: 0.9rem; margin-bottom: 0.5rem;">These only apply when the settings dialog is open (press <kbd>Ctrl+O</kbd>):</p>
+                        <div class="controls-ref-table" style="overflow-x: auto;">
+                            <table style="width: 100%; border-collapse: collapse; margin-bottom: 1rem;">
+                                <thead>
+                                    <tr><th style="padding: 0.5rem; text-align: left; border-bottom: 1px solid var(--border-color, #333); color: var(--accent-color, #00d4aa);">Setting</th><th style="padding: 0.5rem; text-align: left; border-bottom: 1px solid var(--border-color, #333); color: var(--accent-color, #00d4aa);">Default</th><th style="padding: 0.5rem; text-align: left; border-bottom: 1px solid var(--border-color, #333); color: var(--accent-color, #00d4aa);">Action</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);"><code>close_dialog</code></td><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);"><kbd>Esc</kbd></td><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);">Close dialog without saving</td></tr>
+                                    <tr><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);"><code>dialog_up</code></td><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);"><kbd>↑</kbd></td><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);">Move selection up</td></tr>
+                                    <tr><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);"><code>dialog_down</code></td><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);"><kbd>↓</kbd></td><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);">Move selection down</td></tr>
+                                    <tr><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);"><code>dialog_apply</code></td><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);"><kbd>Enter</kbd></td><td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color, #333);">Apply selected setting and close</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <p style="color: var(--text-secondary, #b0b0b0); margin-top: 1rem;"><strong>💡 Tip:</strong> You only need to specify the keybindings you want to change. Unspecified keybindings use their default values. The status bar in LazyLlama dynamically updates to show your configured keybindings.</p>
+                    </div>
+                </details>
             </div>
         </div>
     </section>
