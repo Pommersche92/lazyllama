@@ -290,6 +290,130 @@ pub struct KeyBindings {
     pub dialog_apply: KeyCombination,
 }
 
+impl KeyBindings {
+    /// Returns the key combination for a named binding.
+    pub fn get(&self, name: &str) -> Option<&KeyCombination> {
+        match name {
+            "quit" => Some(&self.quit),
+            "clear_history" => Some(&self.clear_history),
+            "copy" => Some(&self.copy),
+            "paste" => Some(&self.paste),
+            "toggle_autoscroll" => Some(&self.toggle_autoscroll),
+            "open_settings" => Some(&self.open_settings),
+            "select_next_model" => Some(&self.select_next_model),
+            "select_previous_model" => Some(&self.select_previous_model),
+            "send_query" => Some(&self.send_query),
+            "insert_newline" => Some(&self.insert_newline),
+            "cursor_up" => Some(&self.cursor_up),
+            "cursor_down" => Some(&self.cursor_down),
+            "cursor_left" => Some(&self.cursor_left),
+            "cursor_right" => Some(&self.cursor_right),
+            "cursor_word_left" => Some(&self.cursor_word_left),
+            "cursor_word_right" => Some(&self.cursor_word_right),
+            "cursor_home" => Some(&self.cursor_home),
+            "cursor_end" => Some(&self.cursor_end),
+            "cursor_left_select" => Some(&self.cursor_left_select),
+            "cursor_right_select" => Some(&self.cursor_right_select),
+            "cursor_word_left_select" => Some(&self.cursor_word_left_select),
+            "cursor_word_right_select" => Some(&self.cursor_word_right_select),
+            "cursor_home_select" => Some(&self.cursor_home_select),
+            "cursor_end_select" => Some(&self.cursor_end_select),
+            "delete_word_left" => Some(&self.delete_word_left),
+            "delete_word_right" => Some(&self.delete_word_right),
+            "delete_forward" => Some(&self.delete_forward),
+            "backspace" => Some(&self.backspace),
+            "page_up" => Some(&self.page_up),
+            "page_down" => Some(&self.page_down),
+            "close_dialog" => Some(&self.close_dialog),
+            "dialog_up" => Some(&self.dialog_up),
+            "dialog_down" => Some(&self.dialog_down),
+            "dialog_apply" => Some(&self.dialog_apply),
+            _ => None,
+        }
+    }
+    
+    /// Sets the key combination for a named binding.
+    pub fn set(&mut self, name: &str, kc: KeyCombination) {
+        match name {
+            "quit" => self.quit = kc,
+            "clear_history" => self.clear_history = kc,
+            "copy" => self.copy = kc,
+            "paste" => self.paste = kc,
+            "toggle_autoscroll" => self.toggle_autoscroll = kc,
+            "open_settings" => self.open_settings = kc,
+            "select_next_model" => self.select_next_model = kc,
+            "select_previous_model" => self.select_previous_model = kc,
+            "send_query" => self.send_query = kc,
+            "insert_newline" => self.insert_newline = kc,
+            "cursor_up" => self.cursor_up = kc,
+            "cursor_down" => self.cursor_down = kc,
+            "cursor_left" => self.cursor_left = kc,
+            "cursor_right" => self.cursor_right = kc,
+            "cursor_word_left" => self.cursor_word_left = kc,
+            "cursor_word_right" => self.cursor_word_right = kc,
+            "cursor_home" => self.cursor_home = kc,
+            "cursor_end" => self.cursor_end = kc,
+            "cursor_left_select" => self.cursor_left_select = kc,
+            "cursor_right_select" => self.cursor_right_select = kc,
+            "cursor_word_left_select" => self.cursor_word_left_select = kc,
+            "cursor_word_right_select" => self.cursor_word_right_select = kc,
+            "cursor_home_select" => self.cursor_home_select = kc,
+            "cursor_end_select" => self.cursor_end_select = kc,
+            "delete_word_left" => self.delete_word_left = kc,
+            "delete_word_right" => self.delete_word_right = kc,
+            "delete_forward" => self.delete_forward = kc,
+            "backspace" => self.backspace = kc,
+            "page_up" => self.page_up = kc,
+            "page_down" => self.page_down = kc,
+            "close_dialog" => self.close_dialog = kc,
+            "dialog_up" => self.dialog_up = kc,
+            "dialog_down" => self.dialog_down = kc,
+            "dialog_apply" => self.dialog_apply = kc,
+            _ => {}
+        }
+    }
+    
+    /// Returns a list of all binding names and their display names, in order.
+    pub fn all() -> Vec<(&'static str, &'static str)> {
+        vec![
+            ("quit", "Quit"),
+            ("clear_history", "Clear History"),
+            ("copy", "Copy Selection"),
+            ("paste", "Paste"),
+            ("toggle_autoscroll", "Toggle Autoscroll"),
+            ("open_settings", "Open Settings"),
+            ("select_next_model", "Next Model"),
+            ("select_previous_model", "Previous Model"),
+            ("send_query", "Send Query"),
+            ("insert_newline", "Insert Newline"),
+            ("cursor_up", "Cursor Up"),
+            ("cursor_down", "Cursor Down"),
+            ("cursor_left", "Cursor Left"),
+            ("cursor_right", "Cursor Right"),
+            ("cursor_word_left", "Word Left"),
+            ("cursor_word_right", "Word Right"),
+            ("cursor_home", "Home"),
+            ("cursor_end", "End"),
+            ("cursor_left_select", "Select Left"),
+            ("cursor_right_select", "Select Right"),
+            ("cursor_word_left_select", "Select Word Left"),
+            ("cursor_word_right_select", "Select Word Right"),
+            ("cursor_home_select", "Select Home"),
+            ("cursor_end_select", "Select End"),
+            ("delete_word_left", "Delete Word Left"),
+            ("delete_word_right", "Delete Word Right"),
+            ("delete_forward", "Delete Forward"),
+            ("backspace", "Backspace"),
+            ("page_up", "Page Up"),
+            ("page_down", "Page Down"),
+            ("close_dialog", "Close Dialog"),
+            ("dialog_up", "Dialog Up"),
+            ("dialog_down", "Dialog Down"),
+            ("dialog_apply", "Dialog Apply"),
+        ]
+    }
+}
+
 impl Default for KeyBindings {
     fn default() -> Self {
         KeyBindings {
@@ -411,6 +535,8 @@ pub struct App {
     pub show_settings_dialog: bool,
     /// Currently selected item in the settings dialog.
     pub settings_selection: usize,
+    /// Name of the keybinding currently being recorded (None if not recording).
+    pub settings_recording_binding: Option<String>,
 }
 
 impl App {
@@ -473,6 +599,7 @@ impl App {
             settings,
             show_settings_dialog: false,
             settings_selection: 0,
+            settings_recording_binding: None,
         };
         app.refresh_models().await;
         app

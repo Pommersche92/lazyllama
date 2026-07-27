@@ -160,24 +160,74 @@ async fn main() -> Result<()> {
                 
                 // Handle settings dialog navigation first if it's open
                 if app.show_settings_dialog {
-                    let num_themes = app::SyntaxTheme::all().len();
+                    let themes = app::SyntaxTheme::all();
+                    let bindings = app::KeyBindings::all();
+                    let theme_count = themes.len();
+                    let binding_count = bindings.len();
+                    
+                    // Get the list of selectable indices (themes + keybindings, skips headers/spacers)
+                    let selectable = ui::get_settings_selectable_indices(theme_count, binding_count);
+                    let selectable_count = selectable.len();
+                    
+                    // Convert current selection to its position within the selectable list
+                    let current_sel_pos = selectable.iter().position(|&i| i == app.settings_selection)
+                        .unwrap_or(0);
+                    
+                    // Theme indices in selectable list: 0..theme_count-1
+                    // Binding indices in selectable list: theme_count..theme_count+binding_count-1
+                    let theme_sel_end = theme_count.saturating_sub(1); // last theme index in selectable list
+                    let binding_sel_start = theme_count; // first binding index in selectable list
+                    
+                    // If we're recording a keybinding, capture the next key
+                    if let Some(recording_name) = &app.settings_recording_binding.clone() {
+                        // Esc cancels recording
+                        if matches_key(&key, &kb.close_dialog) {
+                            app.settings_recording_binding = None;
+                        } else {
+                            // Capture the key event as a new binding
+                            let kc = key_event_to_key_combination(&key);
+                            app.settings.keybindings.set(recording_name, kc);
+                            app.settings_recording_binding = None;
+                            // Save settings to disk
+                            let _ = utils::save_settings(&app.settings);
+                        }
+                        terminal.draw(|f| ui::ui(f, &mut app))?;
+                        continue;
+                    }
+                    
                     if matches_key(&key, &kb.close_dialog) {
                         app.show_settings_dialog = false;
                         continue;
                     } else if matches_key(&key, &kb.dialog_up) {
-                        app.settings_selection = app.settings_selection.saturating_sub(1);
+                        if current_sel_pos > 0 {
+                            app.settings_selection = selectable[current_sel_pos - 1];
+                        } else {
+                            // Wrap to last selectable item
+                            app.settings_selection = selectable[selectable_count - 1];
+                        }
                     } else if matches_key(&key, &kb.dialog_down) {
-                        if app.settings_selection < num_themes - 1 {
-                            app.settings_selection += 1;
+                        if current_sel_pos + 1 < selectable_count {
+                            app.settings_selection = selectable[current_sel_pos + 1];
+                        } else {
+                            // Wrap to first selectable item
+                            app.settings_selection = selectable[0];
                         }
                     } else if matches_key(&key, &kb.dialog_apply) {
-                        let themes = app::SyntaxTheme::all();
-                        if let Some(theme) = themes.get(app.settings_selection) {
-                            app.settings.syntax_theme = theme.clone();
-                            // Save settings to disk
-                            let _ = utils::save_settings(&app.settings);
+                        // Check if we're on a theme item
+                        if current_sel_pos <= theme_sel_end {
+                            if let Some(theme) = themes.get(current_sel_pos) {
+                                app.settings.syntax_theme = theme.clone();
+                                // Save settings to disk
+                                let _ = utils::save_settings(&app.settings);
+                            }
                         }
-                        app.show_settings_dialog = false;
+                        // Check if we're on a keybinding item
+                        else if current_sel_pos >= binding_sel_start {
+                            let binding_idx = current_sel_pos - binding_sel_start;
+                            if let Some((name, _)) = bindings.get(binding_idx) {
+                                app.settings_recording_binding = Some(name.to_string());
+                            }
+                        }
                     }
                     // Redraw after dialog event
                     terminal.draw(|f| ui::ui(f, &mut app))?;
@@ -219,7 +269,8 @@ async fn main() -> Result<()> {
                 else if matches_key(&key, &kb.open_settings) {
                     app.show_settings_dialog = !app.show_settings_dialog;
                     if app.show_settings_dialog {
-                        app.settings_selection = 0;
+                        // Start with the first selectable item (first theme, index 1)
+                        app.settings_selection = 1;
                     }
                 }
                 // -- Cursor word left with selection (Ctrl+Shift+Left) --
@@ -354,6 +405,40 @@ async fn main() -> Result<()> {
     utils::save_history_to_file(&app.history)?;
     utils::save_model_histories(&app.model_histories)?;
     Ok(())
+}
+
+/// Converts a crossterm KeyEvent into a KeyCombination for storage.
+///
+/// This is used when recording keybindings in the settings dialog.
+fn key_event_to_key_combination(key: &crossterm::event::KeyEvent) -> app::KeyCombination {
+    let ctrl = key.modifiers.contains(KeyModifiers::CONTROL);
+    let shift = key.modifiers.contains(KeyModifiers::SHIFT);
+    
+    let key_code = match key.code {
+        KeyCode::Char(c) => {
+            if ctrl || shift {
+                c.to_uppercase().to_string()
+            } else {
+                c.to_string()
+            }
+        }
+        KeyCode::Enter => "Enter".to_string(),
+        KeyCode::Backspace => "Backspace".to_string(),
+        KeyCode::Delete => "Delete".to_string(),
+        KeyCode::Up => "Up".to_string(),
+        KeyCode::Down => "Down".to_string(),
+        KeyCode::Left => "Left".to_string(),
+        KeyCode::Right => "Right".to_string(),
+        KeyCode::Home => "Home".to_string(),
+        KeyCode::End => "End".to_string(),
+        KeyCode::PageUp => "PageUp".to_string(),
+        KeyCode::PageDown => "PageDown".to_string(),
+        KeyCode::Esc => "Esc".to_string(),
+        KeyCode::Tab => "Tab".to_string(),
+        _ => return app::KeyCombination::parse("C-q").unwrap(), // fallback
+    };
+    
+    app::KeyCombination { key_code, ctrl, shift }
 }
 
 /// Returns true if this is a system-level key that should not be inserted as text.

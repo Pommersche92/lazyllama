@@ -605,11 +605,43 @@ fn build_status_bar(app: &App, kb: &crate::app::KeyBindings, selected_model: &st
     status
 }
 
+/// Returns the list of all selectable (theme and keybinding) indices for the settings dialog.
+///
+/// "selectable" means the user can highlight and interact with this item.
+/// Headers, spacers, and footer text are non-selectable and skipped during navigation.
+///
+/// The returned vector contains the actual list indices of selectable items.
+pub fn get_settings_selectable_indices(theme_count: usize, binding_count: usize) -> Vec<usize> {
+    // Actual item layout:
+    //   0                     -> "Syntax Highlighting Theme:" header (non-selectable)
+    //   1 .. 1+theme_count-1  -> themes (selectable)
+    //   1+theme_count         -> spacer (non-selectable)
+    //   1+theme_count+1       -> "Keybindings (...)" header (non-selectable)
+    //   1+theme_count+2 .. 1+theme_count+2+binding_count-1 -> keybindings (selectable)
+    //   1+theme_count+2+binding_count     -> spacer (non-selectable)
+    //   1+theme_count+2+binding_count+1   -> footer (non-selectable)
+    
+    let mut indices = Vec::new();
+    // Theme selectable indices: 1 .. theme_count (inclusive)
+    for i in 1..=theme_count {
+        indices.push(i);
+    }
+    // Keybinding selectable indices: theme_count+3 .. theme_count+3+binding_count-1 (inclusive)
+    let bind_start = theme_count + 3;
+    for i in bind_start..bind_start + binding_count {
+        indices.push(i);
+    }
+    indices
+}
+
 /// Renders the settings dialog popup.
 ///
 /// This function displays a centered popup dialog that allows users to configure
-/// application settings, primarily the syntax highlighting theme. The dialog shows
-/// all available themes grouped by dark and light categories.
+/// application settings, including syntax highlighting theme and keybindings.
+/// The dialog shows two sections: theme selection and keybinding configuration.
+///
+/// The dialog uses stateful rendering so the List widget handles scrolling
+/// automatically as the user navigates.
 ///
 /// # Arguments
 ///
@@ -618,15 +650,15 @@ fn build_status_bar(app: &App, kb: &crate::app::KeyBindings, selected_model: &st
 ///
 /// # Navigation
 ///
-/// - Up/Down arrows: Navigate through themes
-/// - Enter: Apply selected theme and close dialog
+/// - Up/Down arrows: Navigate through themes and keybindings (skips headers)
+/// - Enter: Apply selected theme or start keybinding recording
 /// - Esc/q: Close dialog without changes
 fn render_settings_dialog(f: &mut Frame, app: &App) {
     let area = f.area();
     
-    // Create a centered popup area (60% width, 70% height)
-    let popup_width = (area.width * 60) / 100;
-    let popup_height = (area.height * 70) / 100;
+    // Create a centered popup area (70% width, 80% height)
+    let popup_width = (area.width * 70) / 100;
+    let popup_height = (area.height * 80) / 100;
     let popup_x = (area.width.saturating_sub(popup_width)) / 2;
     let popup_y = (area.height.saturating_sub(popup_height)) / 2;
     
@@ -642,40 +674,25 @@ fn render_settings_dialog(f: &mut Frame, app: &App) {
     
     // Build the settings content
     let themes = crate::app::SyntaxTheme::all();
+    let bindings = crate::app::KeyBindings::all();
+    
     let mut items: Vec<ListItem> = Vec::new();
     
-    // Add header
-    items.push(ListItem::new(Line::from(vec![
-        Span::styled("Settings", Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD)),
-    ])));
-    items.push(ListItem::new(""));
-    
-    // Add theme section header
+    // Add theme section header (index 0, non-selectable)
     items.push(ListItem::new(Line::from(vec![
         Span::styled("Syntax Highlighting Theme:", Style::default().fg(Color::Yellow)),
     ])));
-    items.push(ListItem::new(""));
     
-    // Add dark themes
-    items.push(ListItem::new(Line::from(vec![
-        Span::styled("  Dark Themes:", Style::default().fg(Color::Gray)),
-    ])));
-    for (idx, theme) in themes.iter().enumerate() {
-        if !theme.is_dark() {
-            break;
-        }
-        
-        let is_selected = idx == app.settings_selection;
+    // Add themes (indices 1..1+theme_count, selectable)
+    for (_idx, theme) in themes.iter().enumerate() {
         let is_current = theme == &app.settings.syntax_theme;
         
-        let mut label = format!("    {}", theme.display_name());
+        let mut label = format!("  {}", theme.display_name());
         if is_current {
             label.push_str(" ✓");
         }
         
-        let style = if is_selected {
-            Style::default().fg(Color::Black).bg(Color::Cyan)
-        } else if is_current {
+        let style = if is_current {
             Style::default().fg(Color::Green)
         } else {
             Style::default()
@@ -684,30 +701,30 @@ fn render_settings_dialog(f: &mut Frame, app: &App) {
         items.push(ListItem::new(label).style(style));
     }
     
+    // Add spacer (non-selectable)
     items.push(ListItem::new(""));
     
-    // Add light themes
+    // Add keybinding section header (non-selectable)
     items.push(ListItem::new(Line::from(vec![
-        Span::styled("  Light Themes:", Style::default().fg(Color::Gray)),
+        Span::styled("Keybindings (Enter to rebind):", Style::default().fg(Color::Yellow)),
     ])));
     
-    for (idx, theme) in themes.iter().enumerate() {
-        if theme.is_dark() {
-            continue;
-        }
+    // Add keybindings (selectable)
+    for (name, display_name) in &bindings {
+        let is_recording = app.settings_recording_binding.as_deref() == Some(name);
         
-        let is_selected = idx == app.settings_selection;
-        let is_current = theme == &app.settings.syntax_theme;
+        let current_kc = app.settings.keybindings.get(name)
+            .map(|kc| kc.display())
+            .unwrap_or_else(|| "?".to_string());
         
-        let mut label = format!("    {}", theme.display_name());
-        if is_current {
-            label.push_str(" ✓");
-        }
+        let label = if is_recording {
+            format!("  {}: [press key...]", display_name)
+        } else {
+            format!("  {}: {}", display_name, current_kc)
+        };
         
-        let style = if is_selected {
-            Style::default().fg(Color::Black).bg(Color::Cyan)
-        } else if is_current {
-            Style::default().fg(Color::Green)
+        let style = if is_recording {
+            Style::default().fg(Color::Yellow).bg(Color::Blue).add_modifier(Modifier::BOLD)
         } else {
             Style::default()
         };
@@ -715,11 +732,16 @@ fn render_settings_dialog(f: &mut Frame, app: &App) {
         items.push(ListItem::new(label).style(style));
     }
     
+    // Add footer
     items.push(ListItem::new(""));
     items.push(ListItem::new(Line::from(vec![
-        Span::styled("↑↓: Navigate  Enter: Apply  Esc/q: Close", 
+        Span::styled("↑↓: Navigate  Enter: Apply/Record  Esc: Close", 
             Style::default().fg(Color::DarkGray)),
     ])));
+    
+    // Create a ListState with the current selection for stateful scrolling
+    let mut list_state = ratatui::widgets::ListState::default();
+    list_state.select(Some(app.settings_selection));
     
     let list = List::new(items)
         .block(
@@ -727,9 +749,12 @@ fn render_settings_dialog(f: &mut Frame, app: &App) {
                 .borders(Borders::ALL)
                 .border_style(Style::default().fg(Color::Cyan))
                 .title(" Settings ")
+        )
+        .highlight_style(
+            Style::default().fg(Color::Black).bg(Color::Cyan)
         );
     
-    f.render_widget(list, popup_area);
+    f.render_stateful_widget(list, popup_area, &mut list_state);
 }
 
 /// Parses conversation history and converts it into a formatted Ratatui Text object.
