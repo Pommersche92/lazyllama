@@ -43,6 +43,9 @@ use std::io;
 use std::time::Instant;
 use tokio_stream::StreamExt;
 
+/// The current installed version of the application, read from Cargo.toml at compile time.
+pub const VERSION: &str = env!("CARGO_PKG_VERSION");
+
 /// Available syntax highlighting themes for code blocks.
 ///
 /// This enum contains curated themes optimized for both dark and light
@@ -537,6 +540,10 @@ pub struct App {
     pub settings_selection: usize,
     /// Name of the keybinding currently being recorded (None if not recording).
     pub settings_recording_binding: Option<String>,
+    /// The latest version available on GitHub (None if check failed or not performed).
+    pub latest_version: Option<String>,
+    /// Whether the version update dialog should be shown.
+    pub show_version_dialog: bool,
 }
 
 impl App {
@@ -600,6 +607,8 @@ impl App {
             show_settings_dialog: false,
             settings_selection: 0,
             settings_recording_binding: None,
+            latest_version: None,
+            show_version_dialog: false,
         };
         app.refresh_models().await;
         app
@@ -1749,4 +1758,75 @@ impl App {
         }
         Ok(())
     }
+
+    /// Checks for a newer version of LazyLlama on GitHub Releases.
+    ///
+    /// This method fetches the latest release tag from the GitHub API and
+    /// compares it with the currently installed version. If a newer version
+    /// is found, it sets `latest_version` and `show_version_dialog` to true.
+    ///
+    /// The check is performed silently — any network errors are ignored and
+    /// the dialog will simply not be shown.
+    pub async fn check_for_updates(&mut self) {
+        let url = "https://api.github.com/repos/Pommersche92/lazyllama/releases/latest";
+        let client = reqwest::Client::builder()
+            .user_agent("lazyllama")
+            .build();
+
+        let client = match client {
+            Ok(c) => c,
+            Err(_) => return,
+        };
+
+        let response = client.get(url).send().await;
+
+        let response = match response {
+            Ok(r) => r,
+            Err(_) => return,
+        };
+
+        // Parse the JSON response to get the tag_name
+        #[derive(serde::Deserialize)]
+        struct Release {
+            tag_name: String,
+        }
+
+        let release: Release = match response.json().await {
+            Ok(r) => r,
+            Err(_) => return,
+        };
+
+        // Strip leading "v" from tag name for comparison
+        let latest = release.tag_name.strip_prefix('v').unwrap_or(&release.tag_name);
+
+        // Compare versions
+        if version_greater(latest, VERSION) {
+            self.latest_version = Some(release.tag_name);
+            self.show_version_dialog = true;
+        }
+    }
+}
+
+/// Compares two semver version strings: returns true if v1 > v2.
+///
+/// Both versions are expected to be in the format "major.minor.patch" (e.g. "0.6.0").
+/// Leading "v" prefixes are handled automatically.
+fn version_greater(v1: &str, v2: &str) -> bool {
+    let v1 = v1.strip_prefix('v').unwrap_or(v1);
+    let v2 = v2.strip_prefix('v').unwrap_or(v2);
+
+    let parts1: Vec<u64> = v1.split('.').filter_map(|s| s.parse().ok()).collect();
+    let parts2: Vec<u64> = v2.split('.').filter_map(|s| s.parse().ok()).collect();
+
+    let max_len = parts1.len().max(parts2.len());
+    for i in 0..max_len {
+        let p1 = parts1.get(i).copied().unwrap_or(0);
+        let p2 = parts2.get(i).copied().unwrap_or(0);
+        if p1 > p2 {
+            return true;
+        } else if p1 < p2 {
+            return false;
+        }
+    }
+    false
 }

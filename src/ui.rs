@@ -574,6 +574,11 @@ pub fn ui(f: &mut Frame, app: &mut App) {
         root_layout[2],
     );
     
+    // Render version dialog if open
+    if app.show_version_dialog {
+        render_version_dialog(f, app);
+    }
+    
     // Render settings dialog if open
     if app.show_settings_dialog {
         render_settings_dialog(f, app);
@@ -755,6 +760,109 @@ fn render_settings_dialog(f: &mut Frame, app: &App) {
         );
     
     f.render_stateful_widget(list, popup_area, &mut list_state);
+}
+
+/// Renders the version update notification dialog.
+///
+/// This function displays a centered popup dialog when a newer version of
+/// LazyLlama is available on GitHub. The dialog shows the current installed
+/// version and the latest available version, along with a message prompting
+/// the user to visit the releases page.
+///
+/// # Arguments
+///
+/// * `f` - The frame to render into
+/// * `app` - The application state containing version information
+///
+/// # Navigation
+///
+/// - Esc: Close the dialog
+fn render_version_dialog(f: &mut Frame, app: &App) {
+    let area = f.area();
+    
+    // Create a centered popup area (50% width, ~40% height)
+    let popup_width = (area.width * 50) / 100;
+    let popup_height = 12; // Fixed height for the version dialog
+    let popup_x = (area.width.saturating_sub(popup_width)) / 2;
+    let popup_y = (area.height.saturating_sub(popup_height)) / 2;
+    
+    let popup_area = ratatui::layout::Rect {
+        x: popup_x,
+        y: popup_y,
+        width: popup_width,
+        height: popup_height,
+    };
+    
+    // Clear the popup area first
+    f.render_widget(Clear, popup_area);
+    
+    // Build the dialog content
+    let latest_version = app.latest_version.as_deref().unwrap_or("?.?.?");
+    let current_version = crate::app::VERSION;
+    
+    let mut lines: Vec<Line> = Vec::new();
+    
+    // Title line
+    lines.push(Line::from(vec![
+        Span::styled(
+            "  🦙 Update Available!",
+            Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD),
+        ),
+    ]));
+    lines.push(Line::from(""));
+    
+    // Version info
+    lines.push(Line::from(vec![
+        Span::raw("  Current version: "),
+        Span::styled(
+            current_version.to_string(),
+            Style::default().fg(Color::Yellow),
+        ),
+    ]));
+    lines.push(Line::from(vec![
+        Span::raw("  Latest version:  "),
+        Span::styled(
+            latest_version.to_string(),
+            Style::default().fg(Color::Green).add_modifier(Modifier::BOLD),
+        ),
+    ]));
+    lines.push(Line::from(""));
+    
+    // Message
+    lines.push(Line::from(vec![
+        Span::styled(
+            "  A new version of LazyLlama is available!",
+            Style::default().fg(Color::White),
+        ),
+    ]));
+    lines.push(Line::from(vec![
+        Span::styled(
+            "  Visit the GitHub releases page to download it.",
+            Style::default().fg(Color::White),
+        ),
+    ]));
+    lines.push(Line::from(""));
+    
+    // Close instruction
+    lines.push(Line::from(vec![
+        Span::styled(
+            "  Press Esc to close this dialog",
+            Style::default().fg(Color::DarkGray),
+        ),
+    ]));
+    
+    let text = Text::from(lines);
+    
+    f.render_widget(
+        Paragraph::new(text)
+            .block(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .border_style(Style::default().fg(Color::Cyan))
+                    .title(" Update Checker "),
+            ),
+        popup_area,
+    );
 }
 
 /// Parses conversation history and converts it into a formatted Ratatui Text object.

@@ -139,6 +139,8 @@ async fn main() -> Result<()> {
     let mut terminal = Terminal::new(backend)?;
 
     let mut app = App::new().await;
+    // Check for updates on startup
+    app.check_for_updates().await;
     let mut should_quit = false;
 
     // Initial draw
@@ -157,6 +159,15 @@ async fn main() -> Result<()> {
                 }
                 
                 let kb = &app.settings.keybindings;
+                
+                // Handle version dialog close (Esc to dismiss)
+                if app.show_version_dialog {
+                    if matches_key(&key, &kb.close_dialog) {
+                        app.show_version_dialog = false;
+                        terminal.draw(|f| ui::ui(f, &mut app))?;
+                    }
+                    continue;
+                }
                 
                 // Handle settings dialog navigation first if it's open
                 if app.show_settings_dialog {

@@ -282,6 +282,15 @@ This project is licensed under the **GPL-2.0-or-later**. See the [LICENSE](LICEN
 
 ## 📝 Changelog
 
+### v0.5.4 - ??? 2026
+
+* **🦙 Version Update Check**: LazyLlama now checks for new versions on startup
+  * Automatically fetches the latest release version from GitHub API
+  * Shows a popup dialog if a newer version is available
+  * Displays current vs. latest version comparison
+  * Dismiss the dialog with Esc
+  * Network errors are silently ignored — no disruption if offline
+
 ### v0.5.3 - July 2026
 
 * **⌨️ Configurable Keybindings**: All keyboard shortcuts can now be customized via the `settings.toml` config file
