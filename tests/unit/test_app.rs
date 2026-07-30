@@ -79,6 +79,7 @@ fn create_test_app() -> App {
         settings: lazyllama::app::Settings::default(),
         show_settings_dialog: false,
         settings_selection: 0,
+        settings_recording_binding: None,
     }
 }
 
