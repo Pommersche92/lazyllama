@@ -1811,7 +1811,7 @@ impl App {
 ///
 /// Both versions are expected to be in the format "major.minor.patch" (e.g. "0.6.0").
 /// Leading "v" prefixes are handled automatically.
-fn version_greater(v1: &str, v2: &str) -> bool {
+pub fn version_greater(v1: &str, v2: &str) -> bool {
     let v1 = v1.strip_prefix('v').unwrap_or(v1);
     let v2 = v2.strip_prefix('v').unwrap_or(v2);
 
