@@ -80,6 +80,8 @@ fn create_test_app() -> App {
         show_settings_dialog: false,
         settings_selection: 0,
         settings_recording_binding: None,
+        latest_version: None,
+        show_version_dialog: false,
     }
 }
 
@@ -1075,4 +1077,101 @@ fn test_bidirectional_selection() {
     // Both should select the same text
     assert_eq!(forward_text, backward_text);
     assert_eq!(forward_text, Some("Hel".to_string()));
+}
+
+/// Tests the version comparison utility function.
+///
+/// Validates that:
+/// - Version strings are compared correctly using semver rules
+/// - Leading "v" prefixes are handled properly
+/// - Equal versions return false
+/// - Major, minor, and patch version differences are detected
+/// - Different-length version strings are handled
+///
+/// # Test Cases
+///
+/// - Patch version upgrade (e.g., 0.5.3 -> 0.5.4)
+/// - Minor version upgrade (e.g., 0.5.3 -> 0.6.0)
+/// - Major version upgrade (e.g., 0.5.3 -> 1.0.0)
+/// - Equal versions (should return false)
+/// - Older version (should return false)
+/// - Versions with "v" prefix
+/// - Different-length version strings (e.g., 0.5 vs 0.5.3)
+#[test]
+fn test_version_greater() {
+    // Patch version upgrade
+    assert!(lazyllama::app::version_greater("0.5.4", "0.5.3"));
+    assert!(!lazyllama::app::version_greater("0.5.3", "0.5.4"));
+    
+    // Minor version upgrade
+    assert!(lazyllama::app::version_greater("0.6.0", "0.5.3"));
+    assert!(!lazyllama::app::version_greater("0.5.3", "0.6.0"));
+    
+    // Major version upgrade
+    assert!(lazyllama::app::version_greater("1.0.0", "0.5.3"));
+    assert!(!lazyllama::app::version_greater("0.5.3", "1.0.0"));
+    
+    // Equal versions
+    assert!(!lazyllama::app::version_greater("0.5.3", "0.5.3"));
+    assert!(!lazyllama::app::version_greater("1.0.0", "1.0.0"));
+    
+    // With "v" prefix
+    assert!(lazyllama::app::version_greater("v0.6.0", "v0.5.3"));
+    assert!(lazyllama::app::version_greater("v0.6.0", "0.5.3"));
+    assert!(lazyllama::app::version_greater("0.6.0", "v0.5.3"));
+    assert!(!lazyllama::app::version_greater("v0.5.3", "v0.6.0"));
+    
+    // Different-length versions
+    assert!(lazyllama::app::version_greater("0.5.3", "0.5"));
+    assert!(!lazyllama::app::version_greater("0.5", "0.5.3"));
+    assert!(lazyllama::app::version_greater("1.0", "0.9.9"));
+    
+    // Edge cases
+    assert!(!lazyllama::app::version_greater("0.0.1", "0.0.1"));
+    assert!(lazyllama::app::version_greater("0.0.2", "0.0.1"));
+}
+
+/// Tests that the VERSION constant is set correctly from Cargo.toml.
+#[test]
+fn test_version_constant() {
+    assert_eq!(lazyllama::app::VERSION, "0.5.3");
+}
+
+/// Tests that the version check fields are initialized correctly in the test app.
+///
+/// Validates that:
+/// - `latest_version` starts as None
+/// - `show_version_dialog` starts as false
+/// - Both fields can be set and read correctly
+#[test]
+fn test_version_check_initial_state() {
+    let app = create_test_app();
+    
+    // Initial state should be None and false
+    assert_eq!(app.latest_version, None);
+    assert!(!app.show_version_dialog);
+}
+
+/// Tests that the version check fields can be set and read correctly.
+///
+/// Validates that:
+/// - Setting `latest_version` to Some works
+/// - Setting `show_version_dialog` to true works
+/// - Both fields persist their values
+#[test]
+fn test_version_check_fields() {
+    let mut app = create_test_app();
+    
+    // Set fields as if an update was found
+    app.latest_version = Some("v0.6.0".to_string());
+    app.show_version_dialog = true;
+    
+    // Verify values
+    assert_eq!(app.latest_version, Some("v0.6.0".to_string()));
+    assert!(app.show_version_dialog);
+    
+    // Clear the dialog
+    app.show_version_dialog = false;
+    assert!(!app.show_version_dialog);
+    assert_eq!(app.latest_version, Some("v0.6.0".to_string()));
 }
